@@ -18,6 +18,9 @@ private:
 	// initializes the first path by finding the first convex vertex in the boundary
 	void initializeFirstPath(Path& firstPath) const;
 
+	// returns closest boundary element to the path's second keypoint
+	const BoundaryElement& closestBoundaryElement(const Path& path) const;
+
 	// check path validity
 	void checkValidity(Path& path) const;
 

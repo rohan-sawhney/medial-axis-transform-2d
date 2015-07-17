@@ -1,4 +1,4 @@
- #include "MedialAxisTransform.h"
+#include "MedialAxisTransform.h"
 #include <stack>
 #include <utility>
 
@@ -29,9 +29,14 @@ void MedialAxisTransform::initializeFirstPath(Path& firstPath) const
 	}
 }
 
+const BoundaryElement& MedialAxisTransform::closestBoundaryElement(const Path& path) const
+{
+
+}
+
 void MedialAxisTransform::checkValidity(Path& path) const
 {
-	// TODO: Implement
+	
 }
 
 void MedialAxisTransform::traceEdgeEdgePath(Path& path) const
@@ -134,9 +139,11 @@ void MedialAxisTransform::traceVertexVertexPath(Path& path) const
 		// find distance to closest governor 
 		double radius = (candPoint - path.gov1).norm();
 		path.keyPoint2 = KeyPoint(candPoint, radius);
-	} 
 
-	checkValidity(path); 
+		checkValidity(path);
+	} else {
+
+	}
 }
 
 void MedialAxisTransform::tracePath(Path& path, std::vector<Path>& medialPaths) const
