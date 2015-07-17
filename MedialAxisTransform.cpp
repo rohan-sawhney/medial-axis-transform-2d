@@ -153,6 +153,91 @@ void MedialAxisTransform::tracePath(Path& path, std::vector<Path>& medialPaths) 
 	medialPaths.push_back(path);
 }
 
+// remove edges sharing a convex vertex. If a vertex is a governor, then the edges proceed 
+// or precede the vertex in intersectionElements depending on which of the two governors the 
+// vertex is. Otherwise, the vertex lies in between the edges 
+void removeConvexEdges(std::vector<std::pair<BoundaryElement, bool> >& intersectionElements)
+{
+	size_t size = intersectionElements.size();
+
+	// check if gov1 is a convex vertex
+	if (intersectionElements[0].first.type == "Vertex") {
+		// the first element could be edge 1 or edge 2
+		if (intersectionElements[1].first.vertex2 == intersectionElements[0].first ||
+			intersectionElements[1].first.vertex1 == intersectionElements[0].first) {
+			intersectionElements[1].second = false;
+		}
+		
+		// check for edge 2
+		if (intersectionElements[2].first.vertex1 == intersectionElements[0].first) {
+			intersectionElements[2].second = false;
+		}
+	}
+
+	// check if gov2 is a convex vertex
+	if (intersectionElements[size-1].first.type == "Vertex") {
+		// the second last element could be edge 1 or edge 2
+		if (intersectionElements[size-2].first.vertex2 == intersectionElements[size-1].first ||
+			intersectionElements[size-2].first.vertex1 == intersectionElements[size-1].first) {
+			intersectionElements[size-2].second = false;
+		}
+		
+		// check for edge 2
+		if (intersectionElements[size-3].first.vertex1 == intersectionElements[size-1].first) {
+			intersectionElements[size-3].second = false;
+		}
+	}
+
+	// check if any other intersection element is a convex vertex
+	for (size_t i = 1; i < size-1; i++) {
+		if (intersectionElements[i].first.type == "Vertex") {
+			// check for edge 1
+			if (intersectionElements[i-1].first.vertex2 == intersectionElements[i].first) {
+				intersectionElements[i-1].second = false;
+			}
+			
+			// check for edge 2
+			if (intersectionElements[i+1].first.vertex1 == intersectionElements[i].first) {
+				intersectionElements[i+1].second = false;
+			}
+		}
+	}
+}
+
+void MedialAxisTransform::handleTransitions(std::vector<BoundaryElement>& validIntersections)
+{
+	// forward transition
+	for (size_t i = 0; i < validIntersections.size()-1; i++) {
+		if (validIntersections[i].type == "Vertex") {
+			if (boundaryElements[validIntersections[i].index].transForward == validIntersections[i+1].index) {
+
+				int nextIndex = validIntersections[i].index+1;
+				if (nextIndex == boundaryElements.size()) nextIndex = 0;
+				validIntersections[i] = boundaryElements[nextIndex];
+
+			} else {
+				boundaryElements[validIntersections[i].index].transForward = validIntersections[i+1].index;
+			}
+		}
+	}
+
+	// backward transition
+	// vertex should not have a forward and backward transition in the same goveror pair
+	for (size_t i = validIntersections.size()-1; i > 0; i--) {
+		if (validIntersections[i].type == "Vertex") {
+			if (boundaryElements[validIntersections[i].index].transBack == validIntersections[i-1].index) {
+				
+				int nextIndex = validIntersections[i].index-1;
+				if (nextIndex < 0) nextIndex = boundaryElements.size()-1;
+				validIntersections[i] = boundaryElements[nextIndex];
+
+			} else {
+				boundaryElements[validIntersections[i].index].transBack = validIntersections[i-1].index;
+			}
+		}
+	}
+}
+
 void MedialAxisTransform::initializeNewPaths(const Path& path, std::vector<Path>& newPathList)
 {
 	std::vector<std::pair<BoundaryElement, bool> > intersectionElements;
@@ -176,40 +261,15 @@ void MedialAxisTransform::initializeNewPaths(const Path& path, std::vector<Path>
 			d = (path.keyPoint2 - boundaryElements[index]).norm();
 		}
 
-		if (std::abs(d - path.keyPoint2.radius) < 0.1) {
+		if (std::abs(d - path.keyPoint2.radius) < 0.1) { // FIX: Should be less that epsilon
 			std::cout << "index: " << index << std::endl;
 			std::pair<BoundaryElement, bool> boundaryElementPair(boundaryElements[index], true);
 			intersectionElements.push_back(boundaryElementPair);
 		}
 	}
 
-	// remove edges sharing a convex vertex 
-	for (int i = 0; i < (int)intersectionElements.size(); i++) {
-		if (intersectionElements[i].first.type == "Vertex") {
-			// edge 1
-			if (i-1 >= 0 && intersectionElements[i-1].first.vertex2 == intersectionElements[i].first) {
-				// vertex is between both governors
-				intersectionElements[i-1].second = false;
-
-			} else if (i+1 < intersectionElements.size() && 
-					   intersectionElements[i+1].first.vertex2 == intersectionElements[i].first) {
-				// vertex was a governor and precedes both edges
-				intersectionElements[i+1].second = false;
-			}	
-
-			// edge 2
-			if (i+1 < intersectionElements.size() && 
-				intersectionElements[i+1].first.vertex1 == intersectionElements[i].first) {
-				// vertex is between both governors
-				intersectionElements[i+1].second = false;
-
-			} else if (i+2 < intersectionElements.size() && 
-					   intersectionElements[i+2].first.vertex1 == intersectionElements[i].first) {
-				// vertex was a governor and precedes both edges
-				intersectionElements[i+2].second = false;
-			}		
-		}
-	}
+	// remove convex edges
+	removeConvexEdges(intersectionElements);
 
 	// fill valid intersecting boundary elements
 	for (size_t i = 0; i < intersectionElements.size(); i++) {
@@ -218,34 +278,12 @@ void MedialAxisTransform::initializeNewPaths(const Path& path, std::vector<Path>
 		}
 	}
 
+	// handle transitions
+	handleTransitions(validIntersections);
+
 	// populate path list
 	newPathList.clear();
 	for (size_t i = 0; i < validIntersections.size()-1; i++) {
-		// handle transitions
-		if (validIntersections[i].type == "Vertex") {
-			if (boundaryElements[validIntersections[i].index].transIndex == validIntersections[i+1].index) {
-				// determine next index based on orientation
-				int nextIndex;
-				if (validIntersections[i].index < validIntersections[i+1].index) {
-					// counter oriented
-					nextIndex = validIntersections[i].index+1;
-					if (nextIndex == boundaryElements.size()) nextIndex = 0;
-
-				} else {
-					// iso oriented
-					nextIndex = validIntersections[i].index-1;
-					if (nextIndex < 0) nextIndex = boundaryElements.size()-1;
-				}
-				validIntersections[i] = boundaryElements[nextIndex];
-				
-			} else {
-				boundaryElements[validIntersections[i].index].transIndex = validIntersections[i+1].index;
-			}
-		}
-
-		std::cout << "idx1: " << validIntersections[i+1].index 
-				  << " idx2: " << validIntersections[i].index << std::endl;
-
 		Path newPath(path.keyPoint2, validIntersections[i+1], validIntersections[i]);
 		newPathList.push_back(newPath);
 	}
@@ -256,7 +294,6 @@ void MedialAxisTransform::initializeNewPaths(const Path& path, std::vector<Path>
 std::vector<Path> MedialAxisTransform::run() 
 {
 	// source: Joan-Arinyo et al. Computing the Medial Axis Transform of Polygonal Domains by Tracing Paths
-
 	std::vector<Path> medialPaths;
 	std::vector<Path> newPathList;
 	std::stack<Path> pathStack;
@@ -265,7 +302,6 @@ std::vector<Path> MedialAxisTransform::run()
 	initializeFirstPath(firstPath);
 	pathStack.push(firstPath);
 	
-//	int j = 0;
 	while (!pathStack.empty()) {
 		Path path = pathStack.top();
 		pathStack.pop();
@@ -277,9 +313,6 @@ std::vector<Path> MedialAxisTransform::run()
 				pathStack.push(newPathList[i]);
 			}
 		}
-
-//		j++;
-//		if (j == 6) break;
 	}
 	
 	return medialPaths;

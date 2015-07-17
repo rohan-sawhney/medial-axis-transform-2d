@@ -26,6 +26,9 @@ private:
 	void traceEdgeVertexPath(Path& path, const int order) const;
 	void traceVertexVertexPath(Path& path) const;
 
+	// handle transitions
+	void handleTransitions(std::vector<BoundaryElement>& validIntersections);
+
 	// initializes new paths based on previous key point and governors
 	void initializeNewPaths(const Path& path, std::vector<Path>& newPathList);
 

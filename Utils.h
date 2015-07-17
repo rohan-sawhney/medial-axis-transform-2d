@@ -42,7 +42,7 @@ struct Utils
 	static Vector2d parabolaIntersection(const Parabola& parabola, 
 										 const Vector2d& p, const Vector2d& l) 
 	{
-		// TODO: using a brute force method! 
+		// FIX: brute force method not accurate!
 		// Analytic approach: y_parabola = y_line => ax^2 + bx + c = mx + c => solve for x
 		Vector2d u = p + l;
 		double dx = u.x() - p.x();
