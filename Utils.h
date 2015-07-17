@@ -51,10 +51,10 @@ struct Utils
 		}
 
 		double m = (u.y() - p.y()) / dx;
-		for (double x = p.x(); x < 500; x = x + 0.01) {
+		for (double x = p.x(); x < 500; x = x + 0.0001) {
 			
 			double y = m*(x - p.x()) + p.y(); 
-			if (std::abs(parabola.getY(x) - y) < 0.01) {
+			if (std::abs(parabola.getY(x) - y) < 0.001) {
 				return Vector2d(x, y);
 			}
 		}

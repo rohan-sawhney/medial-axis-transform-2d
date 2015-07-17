@@ -43,7 +43,7 @@ struct Parabola
 	double getY(const double& x) const
 	{
 		// (ax + by + c)^2 / (a^2 + b^2) = (x-h)^2 + (y-k)^2
-		// solve for y in terms of x
+		// solve for y in terms of x - use wolfram!
 
 		double a2 = a*a;
 		double b2 = b*b;

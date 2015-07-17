@@ -18,13 +18,16 @@ private:
 	// initializes the first path by finding the first convex vertex in the boundary
 	void initializeFirstPath(Path& firstPath) const;
 
-	// adds new valid path to meidal paths
-	void tracePath(Path& path, std::vector<Path>& medialPaths) const;
+	// check path validity
+	void checkValidity(Path& path) const;
 
 	// helper functions for tracing paths
 	void traceEdgeEdgePath(Path& path) const;
 	void traceEdgeVertexPath(Path& path, const int order) const;
 	void traceVertexVertexPath(Path& path) const;
+
+	// adds new valid path to meidal paths
+	void tracePath(Path& path, std::vector<Path>& medialPaths) const;
 
 	// handle transitions
 	void handleTransitions(std::vector<BoundaryElement>& validIntersections);

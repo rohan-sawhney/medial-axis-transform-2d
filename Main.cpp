@@ -50,8 +50,23 @@ void drawCircle(const double cx, const double cy, const double r)
 
 void drawParabola(const Parabola& p, const Vector2d& start, const Vector2d& end) 
 {
+	double startX = start.x();
+	double endX = end.x();
+	if (endX < startX) {
+		startX = end.x();
+		endX = start.x();
+	}
+
+	double dx = 0.1;
+	double diff = endX - startX;
+	while (diff < 1) {
+		diff *= 10;
+		dx /= 10;
+	}
+
+	// FIX: GL_LINE_STRIP does not render for small "diff"
 	glBegin(GL_LINE_STRIP); 
-	for (double x = start.x(); x < end.x(); x += 0.25) {
+	for (double x = startX; x < endX; x += dx) {
 		glVertex2f(x, p.getY(x)); 	
 	}
 	glEnd();

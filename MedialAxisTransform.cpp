@@ -29,6 +29,11 @@ void MedialAxisTransform::initializeFirstPath(Path& firstPath) const
 	}
 }
 
+void MedialAxisTransform::checkValidity(Path& path) const
+{
+	// TODO: Implement
+}
+
 void MedialAxisTransform::traceEdgeEdgePath(Path& path) const
 {
 	if (path.gov1.halfLine1 == path.gov2.halfLine2) {
@@ -55,7 +60,7 @@ void MedialAxisTransform::traceEdgeEdgePath(Path& path) const
 
 		path.keyPoint2 = KeyPoint(candPoint, radius);
 
-		//TODO: check validity 
+		checkValidity(path); 
 	}
 }
 
@@ -100,7 +105,7 @@ void MedialAxisTransform::traceEdgeVertexPath(Path& path, const int order) const
 
 	path.keyPoint2 = KeyPoint(candPoint, radius);
 
-	//TODO: check validity 
+	checkValidity(path); 
 }
 
 void MedialAxisTransform::traceVertexVertexPath(Path& path) const
@@ -131,7 +136,7 @@ void MedialAxisTransform::traceVertexVertexPath(Path& path) const
 		path.keyPoint2 = KeyPoint(candPoint, radius);
 	} 
 
-	//TODO: check validity 
+	checkValidity(path); 
 }
 
 void MedialAxisTransform::tracePath(Path& path, std::vector<Path>& medialPaths) const
@@ -153,14 +158,14 @@ void MedialAxisTransform::tracePath(Path& path, std::vector<Path>& medialPaths) 
 	medialPaths.push_back(path);
 }
 
-// remove edges sharing a convex vertex. If a vertex is a governor, then the edges proceed 
+// remove edges sharing a concave vertex. If a vertex is a governor, then the edges proceed 
 // or precede the vertex in intersectionElements depending on which of the two governors the 
 // vertex is. Otherwise, the vertex lies in between the edges 
-void removeConvexEdges(std::vector<std::pair<BoundaryElement, bool> >& intersectionElements)
+void removeConcaveEdges(std::vector<std::pair<BoundaryElement, bool> >& intersectionElements)
 {
 	size_t size = intersectionElements.size();
 
-	// check if gov1 is a convex vertex
+	// check if gov1 is a concave vertex
 	if (intersectionElements[0].first.type == "Vertex") {
 		// the first element could be edge 1 or edge 2
 		if (intersectionElements[1].first.vertex2 == intersectionElements[0].first ||
@@ -174,7 +179,7 @@ void removeConvexEdges(std::vector<std::pair<BoundaryElement, bool> >& intersect
 		}
 	}
 
-	// check if gov2 is a convex vertex
+	// check if gov2 is a concave vertex
 	if (intersectionElements[size-1].first.type == "Vertex") {
 		// the second last element could be edge 1 or edge 2
 		if (intersectionElements[size-2].first.vertex2 == intersectionElements[size-1].first ||
@@ -188,7 +193,7 @@ void removeConvexEdges(std::vector<std::pair<BoundaryElement, bool> >& intersect
 		}
 	}
 
-	// check if any other intersection element is a convex vertex
+	// check if any other intersection element is a concave vertex
 	for (size_t i = 1; i < size-1; i++) {
 		if (intersectionElements[i].first.type == "Vertex") {
 			// check for edge 1
@@ -261,15 +266,14 @@ void MedialAxisTransform::initializeNewPaths(const Path& path, std::vector<Path>
 			d = (path.keyPoint2 - boundaryElements[index]).norm();
 		}
 
-		if (std::abs(d - path.keyPoint2.radius) < 0.1) { // FIX: Should be less that epsilon
-			std::cout << "index: " << index << std::endl;
+		if (std::abs(d - path.keyPoint2.radius) < 0.01) { // FIX: Should be less that epsilon
 			std::pair<BoundaryElement, bool> boundaryElementPair(boundaryElements[index], true);
 			intersectionElements.push_back(boundaryElementPair);
 		}
 	}
 
-	// remove convex edges
-	removeConvexEdges(intersectionElements);
+	// remove concave edges
+	removeConcaveEdges(intersectionElements);
 
 	// fill valid intersecting boundary elements
 	for (size_t i = 0; i < intersectionElements.size(); i++) {
@@ -287,8 +291,6 @@ void MedialAxisTransform::initializeNewPaths(const Path& path, std::vector<Path>
 		Path newPath(path.keyPoint2, validIntersections[i+1], validIntersections[i]);
 		newPathList.push_back(newPath);
 	}
-
-	std::cout << std::endl;
 }
 
 std::vector<Path> MedialAxisTransform::run() 
