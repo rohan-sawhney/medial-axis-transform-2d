@@ -17,29 +17,30 @@ public:
 private:
 	// initializes the first path by finding the first convex vertex in the boundary
 	void initializeFirstPath(Path& firstPath) const;
-
-	// returns closest boundary element to the path's second keypoint
-	const BoundaryElement& closestBoundaryElement(const Path& path) const;
+    
+    // finds boundary elements intersecting with the medial ball
+    void findIntersections(const Path& path);
 
 	// check path validity
-	void checkValidity(Path& path) const;
+	void checkValidity(Path& path);
 
 	// helper functions for tracing paths
-	void traceEdgeEdgePath(Path& path) const;
-	void traceEdgeVertexPath(Path& path, const int order) const;
-	void traceVertexVertexPath(Path& path) const;
+	void traceEdgeEdgePath(Path& path);
+	void traceEdgeVertexPath(Path& path, const int order);
+	void traceVertexVertexPath(Path& path);
 
 	// adds new valid path to meidal paths
-	void tracePath(Path& path, std::vector<Path>& medialPaths) const;
+	void tracePath(Path& path, std::vector<Path>& medialPaths);
 
 	// handle transitions
-	void handleTransitions(std::vector<BoundaryElement>& validIntersections);
+	void handleTransitions();
 
 	// initializes new paths based on previous key point and governors
 	void initializeNewPaths(const Path& path, std::vector<Path>& newPathList);
 
 	// member variable
 	std::vector<BoundaryElement> boundaryElements;
+    std::vector<BoundaryElement> validIntersections;
 };
 
 #endif 
