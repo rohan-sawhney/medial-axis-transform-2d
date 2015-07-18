@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>IDESourceControlProjectFavoriteDictionaryKey</key>
+	<false/>
+	<key>IDESourceControlProjectIdentifier</key>
+	<string>14D57DEF-7482-4825-829F-4FBBBB671B23</string>
+	<key>IDESourceControlProjectName</key>
+	<string>project</string>
+	<key>IDESourceControlProjectOriginsDictionary</key>
+	<dict>
+		<key>93012211585513E702385219484BD8E8D4D7E84E</key>
+		<string>https://github.com/rohan-sawhney/medial-axis-transform-2d.git</string>
+	</dict>
+	<key>IDESourceControlProjectPath</key>
+	<string>medial-axis-transform-2d/medial-axis-transform-2d.xcodeproj/project.xcworkspace</string>
+	<key>IDESourceControlProjectRelativeInstallPathDictionary</key>
+	<dict>
+		<key>93012211585513E702385219484BD8E8D4D7E84E</key>
+		<string>../../..</string>
+	</dict>
+	<key>IDESourceControlProjectURL</key>
+	<string>https://github.com/rohan-sawhney/medial-axis-transform-2d.git</string>
+	<key>IDESourceControlProjectVersion</key>
+	<integer>111</integer>
+	<key>IDESourceControlProjectWCCIdentifier</key>
+	<string>93012211585513E702385219484BD8E8D4D7E84E</string>
+	<key>IDESourceControlProjectWCConfigurations</key>
+	<array>
+		<dict>
+			<key>IDESourceControlRepositoryExtensionIdentifierKey</key>
+			<string>public.vcs.git</string>
+			<key>IDESourceControlWCCIdentifierKey</key>
+			<string>93012211585513E702385219484BD8E8D4D7E84E</string>
+			<key>IDESourceControlWCCName</key>
+			<string>C++</string>
+		</dict>
+	</array>
+</dict>
+</plist>

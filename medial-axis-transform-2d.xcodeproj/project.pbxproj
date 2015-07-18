@@ -1,0 +1,284 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		327EA9D61B5ABD7500E21DB6 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 327EA9D51B5ABD7500E21DB6 /* main.cpp */; };
+		327EA9E21B5ABDFD00E21DB6 /* MedialAxisTransform.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 327EA9DC1B5ABDFD00E21DB6 /* MedialAxisTransform.cpp */; };
+		327EA9E91B5ABE0600E21DB6 /* BoundaryGenerator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 327EA9E51B5ABE0600E21DB6 /* BoundaryGenerator.cpp */; };
+		327EA9EB1B5ABFB000E21DB6 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 327EA9EA1B5ABFB000E21DB6 /* OpenGL.framework */; };
+		327EA9ED1B5AC0A300E21DB6 /* GLUT.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 327EA9EC1B5AC0A300E21DB6 /* GLUT.framework */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		327EA9D01B5ABD7500E21DB6 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		327EA9D21B5ABD7500E21DB6 /* medial-axis-transform-2d */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "medial-axis-transform-2d"; sourceTree = BUILT_PRODUCTS_DIR; };
+		327EA9D51B5ABD7500E21DB6 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
+		327EA9DC1B5ABDFD00E21DB6 /* MedialAxisTransform.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = MedialAxisTransform.cpp; sourceTree = "<group>"; };
+		327EA9DD1B5ABDFD00E21DB6 /* MedialAxisTransform.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MedialAxisTransform.h; sourceTree = "<group>"; };
+		327EA9DE1B5ABDFD00E21DB6 /* Parabola.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Parabola.h; sourceTree = "<group>"; };
+		327EA9DF1B5ABDFD00E21DB6 /* Path.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Path.h; sourceTree = "<group>"; };
+		327EA9E11B5ABDFD00E21DB6 /* Utils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Utils.h; sourceTree = "<group>"; };
+		327EA9E41B5ABE0600E21DB6 /* BoundaryElement.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BoundaryElement.h; sourceTree = "<group>"; };
+		327EA9E51B5ABE0600E21DB6 /* BoundaryGenerator.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = BoundaryGenerator.cpp; sourceTree = "<group>"; };
+		327EA9E61B5ABE0600E21DB6 /* BoundaryGenerator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BoundaryGenerator.h; sourceTree = "<group>"; };
+		327EA9E71B5ABE0600E21DB6 /* Edge.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Edge.h; sourceTree = "<group>"; };
+		327EA9E81B5ABE0600E21DB6 /* KeyPoint.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = KeyPoint.h; sourceTree = "<group>"; };
+		327EA9EA1B5ABFB000E21DB6 /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
+		327EA9EC1B5AC0A300E21DB6 /* GLUT.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GLUT.framework; path = System/Library/Frameworks/GLUT.framework; sourceTree = SDKROOT; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		327EA9CF1B5ABD7500E21DB6 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				327EA9ED1B5AC0A300E21DB6 /* GLUT.framework in Frameworks */,
+				327EA9EB1B5ABFB000E21DB6 /* OpenGL.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		327EA9C91B5ABD7500E21DB6 = {
+			isa = PBXGroup;
+			children = (
+				327EA9EC1B5AC0A300E21DB6 /* GLUT.framework */,
+				327EA9EA1B5ABFB000E21DB6 /* OpenGL.framework */,
+				327EA9D41B5ABD7500E21DB6 /* medial-axis-transform-2d */,
+				327EA9D31B5ABD7500E21DB6 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		327EA9D31B5ABD7500E21DB6 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				327EA9D21B5ABD7500E21DB6 /* medial-axis-transform-2d */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		327EA9D41B5ABD7500E21DB6 /* medial-axis-transform-2d */ = {
+			isa = PBXGroup;
+			children = (
+				327EA9D51B5ABD7500E21DB6 /* main.cpp */,
+				327EA9DC1B5ABDFD00E21DB6 /* MedialAxisTransform.cpp */,
+				327EA9DD1B5ABDFD00E21DB6 /* MedialAxisTransform.h */,
+				327EA9E51B5ABE0600E21DB6 /* BoundaryGenerator.cpp */,
+				327EA9E61B5ABE0600E21DB6 /* BoundaryGenerator.h */,
+				327EA9E11B5ABDFD00E21DB6 /* Utils.h */,
+				327EA9DF1B5ABDFD00E21DB6 /* Path.h */,
+				327EA9E41B5ABE0600E21DB6 /* BoundaryElement.h */,
+				327EA9DE1B5ABDFD00E21DB6 /* Parabola.h */,
+				327EA9E71B5ABE0600E21DB6 /* Edge.h */,
+				327EA9E81B5ABE0600E21DB6 /* KeyPoint.h */,
+			);
+			path = "medial-axis-transform-2d";
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		327EA9D11B5ABD7500E21DB6 /* medial-axis-transform-2d */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 327EA9D91B5ABD7500E21DB6 /* Build configuration list for PBXNativeTarget "medial-axis-transform-2d" */;
+			buildPhases = (
+				327EA9CE1B5ABD7500E21DB6 /* Sources */,
+				327EA9CF1B5ABD7500E21DB6 /* Frameworks */,
+				327EA9D01B5ABD7500E21DB6 /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "medial-axis-transform-2d";
+			productName = "medial-axis-transform-2d";
+			productReference = 327EA9D21B5ABD7500E21DB6 /* medial-axis-transform-2d */;
+			productType = "com.apple.product-type.tool";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		327EA9CA1B5ABD7500E21DB6 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 0640;
+				ORGANIZATIONNAME = "Rohan Sawhney";
+				TargetAttributes = {
+					327EA9D11B5ABD7500E21DB6 = {
+						CreatedOnToolsVersion = 6.4;
+					};
+				};
+			};
+			buildConfigurationList = 327EA9CD1B5ABD7500E21DB6 /* Build configuration list for PBXProject "medial-axis-transform-2d" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+			);
+			mainGroup = 327EA9C91B5ABD7500E21DB6;
+			productRefGroup = 327EA9D31B5ABD7500E21DB6 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				327EA9D11B5ABD7500E21DB6 /* medial-axis-transform-2d */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		327EA9CE1B5ABD7500E21DB6 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				327EA9E91B5ABE0600E21DB6 /* BoundaryGenerator.cpp in Sources */,
+				327EA9D61B5ABD7500E21DB6 /* main.cpp in Sources */,
+				327EA9E21B5ABDFD00E21DB6 /* MedialAxisTransform.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		327EA9D71B5ABD7500E21DB6 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.10;
+				MTL_ENABLE_DEBUG_INFO = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		327EA9D81B5ABD7500E21DB6 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.10;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		327EA9DA1B5ABD7500E21DB6 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
+					/usr/local/Cellar/eigen/3.2.4/include/eigen3/,
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		327EA9DB1B5ABD7500E21DB6 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
+					/usr/local/Cellar/eigen/3.2.4/include/eigen3/,
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		327EA9CD1B5ABD7500E21DB6 /* Build configuration list for PBXProject "medial-axis-transform-2d" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				327EA9D71B5ABD7500E21DB6 /* Debug */,
+				327EA9D81B5ABD7500E21DB6 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		327EA9D91B5ABD7500E21DB6 /* Build configuration list for PBXNativeTarget "medial-axis-transform-2d" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				327EA9DA1B5ABD7500E21DB6 /* Debug */,
+				327EA9DB1B5ABD7500E21DB6 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 327EA9CA1B5ABD7500E21DB6 /* Project object */;
+}
