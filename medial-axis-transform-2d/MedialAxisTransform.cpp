@@ -125,6 +125,8 @@ void MedialAxisTransform::checkValidity(Path& path)
 {
     // get intersecting boundary elements
     findIntersections(path);
+    
+    // TODO: Implement
 }
 
 void MedialAxisTransform::traceEdgeEdgePath(Path& path)
