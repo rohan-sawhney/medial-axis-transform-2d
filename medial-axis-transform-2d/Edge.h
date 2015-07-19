@@ -10,7 +10,7 @@ struct Edge
 	Edge() {}
 	Edge(const Vector2d& v1, const Vector2d& v2): vertex1(v1), vertex2(v2) {}
 	Edge(const Edge& e): vertex1(e.vertex1), vertex2(e.vertex2) {}
-
+        
 	// returns normalized tangent 
 	Vector2d tangent() const {
 		Vector2d t(vertex2 - vertex1);
@@ -33,7 +33,7 @@ struct Edge
 
 		return m;
 	}
-
+    
 	// member variables 
 	Vector2d vertex1;
 	Vector2d vertex2;

@@ -27,14 +27,15 @@ struct Utils
 	static Vector2d lineIntersection(const Vector2d& p1, const Vector2d& l1, 
 									 const Vector2d& p2, const Vector2d& l2) 
 	{
-		double u = (p1.y()*l2.x() + l2.y()*p2.x() - p2.y()*l2.x()  - l2.y()*p1.x()) / 
-			   (l1.x()*l2.y() - l2.x()*l1.y());
+        double u = (p1.y()*l2.x() + l2.y()*p2.x() - p2.y()*l2.x()  - l2.y()*p1.x()) /
+                   (l1.x()*l2.y() - l2.x()*l1.y());
+        double v = (p1.x() + l1.x()*u - p2.x()) / l2.x();
 
-		if (u >= 0) {
+		if (u >= 0 || v >= 0) {
 			return p1 + l1*u;
 		}
 
-		return Vector2d();
+		return Vector2d::Zero();
 	}
 
 	// checks if line intersects with parabola
@@ -58,7 +59,7 @@ struct Utils
 			}
 		}
 
-		return Vector2d();
+		return Vector2d::Zero();
 	}
 
 	// finds closest point on an edge from another point not on the edge
@@ -87,6 +88,66 @@ struct Utils
 		Vector2d m = closestPointOnEdge(p, e);
 		return (p - m).norm();
 	}
+    
+    // computes equation of a circle given 1 point on the circle and 2 line segments tangent to it
+    static int findCircle(const Edge& e1, const Edge& e2, const Vector2d& p, Vector2d& c)
+    {
+        return 0;
+    }
+    
+    // computes equation of a circle given 2 points on the circle and 1 line segments tangent to it
+    static int findCircle(const Edge& e, const Vector2d& p1, const Vector2d& p2, Vector2d& c)
+    {
+        return 0;
+    }
+    
+    // computes equation of a circle given 3 points on the circle
+    static double findCircle(const Vector2d& p1, const Vector2d& p2, const Vector2d& p3, Vector2d& c)
+    {
+        double dy1 = p2.y() - p1.y();
+        double dx1 = p2.x() - p1.x();
+        double dy2 = p3.y() - p2.y();
+        double dx2 = p3.x() - p2.x();
+        
+        double m1 = dy1 / dx1;
+        double m2 = dy2 / dx2;
+        
+        Vector2d mid1 = (p1 + p2) / 2;
+        Vector2d mid2 = (p3 + p2) / 2;
+  
+        if (dy1 == 0) { // m1 = 0
+            c.x() = mid1.x();
+            if (dx2 == 0) { // m2 = inf
+                c.y() = mid2.y();
+                
+            } else {
+                c.y() = mid2.y() + (mid2.x() - c.x()) / m2;
+            }
+            
+        } else if(dy2 == 0) { // m2 = 0
+            c.x() = mid2.x();
+            if (dx1 == 0) { // m1 = inf
+                c.y() = mid1.y();
+                
+            } else {
+                c.y() = mid1.y() + (mid1.x() - c.x()) / m1;
+            }
+            
+        } else if (dx1 == 0) { // m1 = inf
+            c.y() = mid1.y();
+            c.x() = m2*(mid2.y() - c.y()) + mid2.x();
+            
+        } else if (dx2 == 0) { // m2 = inf
+            c.y() = mid2.y();
+            c.x() = m1*(mid1.y() - c.y()) + mid1.x();
+            
+        } else {
+            c.x() = (m1*m2*(mid1.y() - mid2.y()) - m1*mid2.x() + m2*mid1.x()) / (m2 - m1);
+            c.y() = mid1.y() - (c.x() - mid1.x()) / m1;
+        }
+        
+        return (c - p1).norm();
+    }
 };
 
 #endif

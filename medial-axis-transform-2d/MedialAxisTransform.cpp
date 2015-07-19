@@ -4,31 +4,6 @@
 
 #define EPSILON 1e-6
 
-void MedialAxisTransform::setBoundaryElements(const std::vector<BoundaryElement>& be)
-{
-	boundaryElements = be;
-}
-
-void MedialAxisTransform::initializeFirstPath(Path& firstPath) const 
-{
-	size_t size = boundaryElements.size();
-
-	for (int i = 0; i < size; i++) {
-		int next = (i+1) % size;
-		// find first convex vertex to initialize as key point 
-		if (boundaryElements[i].type == "Edge" && 
-			boundaryElements[next].type == "Edge" &&
-			!Utils::inHalfPlane(boundaryElements[i].tangent(), boundaryElements[next].tangent())) {
-				
-			firstPath.keyPoint1 = KeyPoint(boundaryElements[i].vertex2, 0);
-			firstPath.gov1 = boundaryElements[i];
-			firstPath.gov2 = boundaryElements[next];
-
-			break;
-		}
-	}
-}
-
 // remove edges sharing a concave vertex. If a vertex is a governor, then the edges proceed
 // or precede the vertex in intersectionElements depending on which of the two governors the
 // vertex is. Otherwise, the vertex lies in between the edges
@@ -80,56 +55,84 @@ void removeConcaveEdges(std::vector<std::pair<BoundaryElement, bool> >& intersec
     }
 }
 
-void MedialAxisTransform::findIntersections(const Path& path)
+void MedialAxisTransform::setBoundaryElements(const std::vector<BoundaryElement>& be)
 {
-    validIntersections.clear();
-    std::vector<std::pair<BoundaryElement, bool> > intersectionElements;
-    
-    // insert intersecting boundary element around junction point in sorted order
-    // implementation detail: gov2 has smaller index than gov1
-    size_t size = boundaryElements.size();
-    int endIndex = path.gov1.index;
-    if (endIndex < path.gov2.index) endIndex += size;
-    
-    for (size_t i = path.gov2.index; i <= endIndex; i++) {
-        size_t index = i;
-        if (index >= size) index -= size;
-        
-        double d;
-        if (boundaryElements[index].type == "Edge") {
-            d = Utils::distToEdge(path.keyPoint2, boundaryElements[index]);
+	boundaryElements = be;
+}
+
+void MedialAxisTransform::initializeFirstPath(Path& firstPath) const 
+{
+	size_t size = boundaryElements.size();
+
+	for (int i = 0; i < size; i++) {
+		int next = (i+1) % size;
+		// find first convex vertex to initialize as key point 
+		if (boundaryElements[i].type == "Edge" && 
+			boundaryElements[next].type == "Edge" &&
+			!Utils::inHalfPlane(boundaryElements[i].tangent(), boundaryElements[next].tangent())) {
+				
+			firstPath.keyPoint1 = KeyPoint(boundaryElements[i].vertex2, 0);
+			firstPath.gov1 = boundaryElements[i];
+			firstPath.gov2 = boundaryElements[next];
+
+			break;
+		}
+	}
+}
+
+void MedialAxisTransform::checkValidity(Path& path, const int traceType) const
+{
+    // check if there is any boundary element inside the medial ball
+    int index = -1;
+    double minD = path.keyPoint2.radius;
+    for (size_t i = 0; i < boundaryElements.size(); i++) {
+        if (boundaryElements[i].type == "Vertex" &&
+            boundaryElements[i].index != path.gov1.index &&
+            boundaryElements[i].index != path.gov2.index) {
             
-        } else if (boundaryElements[index].type == "Vertex") {
-            d = (path.keyPoint2 - boundaryElements[index]).norm();
+            if (!(path.gov1.type == "Edge" && path.gov1.vertex1 == boundaryElements[i]) &&
+                !(path.gov2.type == "Edge" && path.gov2.vertex2 == boundaryElements[i])) {
+                
+                double d = (path.keyPoint2 - boundaryElements[i]).norm();
+                
+                if (d < minD) {
+                    minD = d;
+                    index = (int)i;
+                }
+            }
+        }
+    }
+    
+    // if there is, determine new center and radius for medial ball
+    if (index != -1) {
+        std::cout << "index: " << index << " traceType: " << traceType << std::endl;
+        double radius;
+        Vector2d center;
+        
+        if (traceType == 0) {
+            radius = Utils::findCircle((Edge)path.gov1, (Edge)path.gov2,
+                                       (Vector2d)boundaryElements[index], center);
+            
+        } else if (traceType == 1) {
+            if (path.gov1.type == "Edge" && path.gov1.type == "Vertex") {
+                radius = Utils::findCircle((Edge)path.gov1, (Vector2d)path.gov2,
+                                           (Vector2d)boundaryElements[index], center);
+                
+            } else {
+                radius = Utils::findCircle((Edge)path.gov2, (Vector2d)path.gov1,
+                                           (Vector2d)boundaryElements[index], center);
+            }
+            
+        } else {
+            radius = Utils::findCircle((Vector2d)path.gov1, (Vector2d)path.gov2,
+                                       (Vector2d)boundaryElements[index], center);
         }
         
-        if (std::abs(d - path.keyPoint2.radius) < 0.01) { // FIX: Should be less that epsilon
-            std::cout << "index: " << index << std::endl;
-            std::pair<BoundaryElement, bool> boundaryElementPair(boundaryElements[index], true);
-            intersectionElements.push_back(boundaryElementPair);
-        }
-    }
-    
-    // remove concave edges
-    removeConcaveEdges(intersectionElements);
-    
-    // fill valid intersecting boundary elements
-    for (size_t i = 0; i < intersectionElements.size(); i++) {
-        if (intersectionElements[i].second) {
-            validIntersections.push_back(intersectionElements[i].first);
-        }
+        path.keyPoint2 = KeyPoint(center, radius);
     }
 }
 
-void MedialAxisTransform::checkValidity(Path& path)
-{
-    // get intersecting boundary elements
-    findIntersections(path);
-    
-    // TODO: Implement
-}
-
-void MedialAxisTransform::traceEdgeEdgePath(Path& path)
+void MedialAxisTransform::traceEdgeEdgePath(Path& path) const
 {
 	if (path.gov1.halfLine1 == path.gov2.halfLine2) {
 		// key point is an end point 
@@ -155,11 +158,11 @@ void MedialAxisTransform::traceEdgeEdgePath(Path& path)
 
 		path.keyPoint2 = KeyPoint(candPoint, radius);
 
-		checkValidity(path); 
+		checkValidity(path, 0);
 	}
 }
 
-void MedialAxisTransform::traceEdgeVertexPath(Path& path, const int order)
+void MedialAxisTransform::traceEdgeVertexPath(Path& path, const int order) const
 {
 	Vector2d focus;
 	Vector2d candPoint1;
@@ -200,28 +203,29 @@ void MedialAxisTransform::traceEdgeVertexPath(Path& path, const int order)
 
 	path.keyPoint2 = KeyPoint(candPoint, radius);
 
-	checkValidity(path); 
+	checkValidity(path, 1);
 }
 
-void MedialAxisTransform::traceVertexVertexPath(Path& path)
+void MedialAxisTransform::traceVertexVertexPath(Path& path) const
 {
 	Edge edge(path.gov1, path.gov2);
 	Vector2d normal = edge.normal();
 	Vector2d mid = (path.gov1 + path.gov2) / 2;
-
-	// compute candidate points 
+    
+	// compute candidate points
 	Vector2d candPoint1 = Utils::lineIntersection(mid, normal, 
 												  (Vector2d)path.gov1, path.gov1.halfLine1);
 
 	Vector2d candPoint2 = Utils::lineIntersection(mid, normal,
 												  (Vector2d)path.gov2, path.gov2.halfLine2);
 
-	Vector2d invalid;
-	if (candPoint1 != invalid || candPoint2 != invalid) {
-		// find the closer candidate key point 
+	Vector2d zero = Vector2d::Zero();
+	if (candPoint1 != zero || candPoint2 != zero) {
+		// find the closer candidate key point
+        
 		Vector2d candPoint;
-		if (candPoint1 == invalid) candPoint = candPoint2;
-		else if (candPoint2 == invalid) candPoint = candPoint1;
+		if (candPoint1 == zero) candPoint = candPoint2;
+		else if (candPoint2 == zero) candPoint = candPoint1;
 		else candPoint = (path.keyPoint1 - candPoint1).squaredNorm() < 
 					     (path.keyPoint1 - candPoint2).squaredNorm() ? 
 						 candPoint1 : candPoint2;
@@ -229,13 +233,15 @@ void MedialAxisTransform::traceVertexVertexPath(Path& path)
 		// find distance to closest governor 
 		double radius = (candPoint - path.gov1).norm();
 		path.keyPoint2 = KeyPoint(candPoint, radius);
-
-	}
-    
-    checkValidity(path);
+        
+        checkValidity(path, 2);
+        
+    } else {
+        // TODO: Implement
+    }
 }
 
-void MedialAxisTransform::tracePath(Path& path, std::vector<Path>& medialPaths)
+void MedialAxisTransform::tracePath(Path& path, std::vector<Path>& medialPaths) const
 {
 	// trace paths case by case
 	if (path.gov1.type == "Edge" && path.gov2.type == "Edge") {
@@ -254,51 +260,110 @@ void MedialAxisTransform::tracePath(Path& path, std::vector<Path>& medialPaths)
 	medialPaths.push_back(path);
 }
 
-void MedialAxisTransform::handleTransitions()
+void MedialAxisTransform::findIntersections(const Path& path,
+                                            std::vector<BoundaryElement>& intersections) const
 {
-	// forward transition
-	for (size_t i = 0; i < validIntersections.size()-1; i++) {
-		if (validIntersections[i].type == "Vertex") {
-			if (boundaryElements[validIntersections[i].index].transForward == validIntersections[i+1].index) {
+    std::vector<std::pair<BoundaryElement, bool> > intersectionElements;
+    
+    // insert intersecting boundary element around junction point in sorted order
+    // implementation detail: gov2 has smaller index than gov1
+    size_t size = boundaryElements.size();
+    int endIndex = path.gov1.index;
+    if (endIndex < path.gov2.index) endIndex += size;
+    
+    for (size_t i = path.gov2.index; i <= endIndex; i++) {
+        size_t index = i;
+        if (index >= size) index -= size;
+        
+        double d;
+        if (boundaryElements[index].type == "Edge") {
+            d = Utils::distToEdge(path.keyPoint2, boundaryElements[index]);
+            
+        } else if (boundaryElements[index].type == "Vertex") {
+            d = (path.keyPoint2 - boundaryElements[index]).norm();
+        }
+        
+        if (fabs(path.keyPoint2.radius - d) < 0.01) { // FIX: Should be less that epsilon
+            std::cout << "index: " << index << std::endl;
+            std::pair<BoundaryElement, bool> boundaryElementPair(boundaryElements[index], true);
+            intersectionElements.push_back(boundaryElementPair);
+        }
+    }
+    
+    // remove concave edges
+    removeConcaveEdges(intersectionElements);
+    
+    // fill valid intersecting boundary elements
+    for (size_t i = 0; i < intersectionElements.size(); i++) {
+        if (intersectionElements[i].second) {
+            intersections.push_back(intersectionElements[i].first);
+        }
+    }
+}
 
-				int nextIndex = validIntersections[i].index+1;
-				if (nextIndex == boundaryElements.size()) nextIndex = 0;
-				validIntersections[i] = boundaryElements[nextIndex];
-
-			} else {
-				boundaryElements[validIntersections[i].index].transForward = validIntersections[i+1].index;
-			}
-		}
-	}
-
-	// backward transition
-	// vertex should not have a forward and backward transition in the same goveror pair
-	for (size_t i = validIntersections.size()-1; i > 0; i--) {
-		if (validIntersections[i].type == "Vertex") {
-			if (boundaryElements[validIntersections[i].index].transBack == validIntersections[i-1].index) {
-				
-				int nextIndex = validIntersections[i].index-1;
-				if (nextIndex < 0) nextIndex = (int)boundaryElements.size()-1;
-				validIntersections[i] = boundaryElements[nextIndex];
-
-			} else {
-				boundaryElements[validIntersections[i].index].transBack = validIntersections[i-1].index;
-			}
-		}
-	}
+void MedialAxisTransform::handleTransitions(std::vector<BoundaryElement>& intersections)
+{
+    // detect forward transitions
+    for (size_t i = 0; i < intersections.size()-1; i++) {
+        if (intersections[i].type == "Vertex") {
+            if (boundaryElements[intersections[i].index].transForward == intersections[i+1].index) {
+                boundaryElements[intersections[i].index].shouldTransition = true;
+                
+            } else {
+                boundaryElements[intersections[i].index].shouldTransition = false;
+                boundaryElements[intersections[i].index].transForward = intersections[i+1].index;
+            }
+        }
+    }
+    
+    // detect backward transitions
+    // vertex should not have a forward and backward transition in the same governor pair
+    for (size_t i = intersections.size()-1; i > 0; i--) {
+        if (intersections[i].type == "Vertex") {
+            if (boundaryElements[intersections[i].index].transBack == intersections[i-1].index) {
+                boundaryElements[intersections[i].index].shouldTransition = true;
+                
+            } else {
+                boundaryElements[intersections[i].index].shouldTransition = false;
+                boundaryElements[intersections[i].index].transBack = intersections[i-1].index;
+            }
+        }
+    }
+    
+    // transition forward
+    for (size_t i = 0; i < intersections.size()-1; i++) {
+        if (boundaryElements[intersections[i].index].shouldTransition) {
+            int nextIndex = intersections[i].index+1;
+            if (nextIndex == boundaryElements.size()) nextIndex = 0;
+            intersections[i] = boundaryElements[nextIndex];
+        }
+    }
+    
+    // transition backward
+    for (size_t i = intersections.size()-1; i > 0; i--) {
+        if (boundaryElements[intersections[i].index].shouldTransition) {
+            int nextIndex = intersections[i].index-1;
+            if (nextIndex < 0) nextIndex = (int)boundaryElements.size()-1;
+            intersections[i] = boundaryElements[nextIndex];
+        }
+    }
 }
 
 void MedialAxisTransform::initializeNewPaths(const Path& path, std::vector<Path>& newPathList)
 {
+    // get intersecting boundary elements
+    std::vector<BoundaryElement> intersections;
+    findIntersections(path, intersections);
+    
 	// handle transitions
-	handleTransitions();
+	handleTransitions(intersections);
 
 	// populate path list
 	newPathList.clear();
-	for (size_t i = 0; i < validIntersections.size()-1; i++) {
-        std::cout << "idx1: " << validIntersections[i+1].index << " idx2: "
-                  << validIntersections[i].index << std::endl;
-		Path newPath(path.keyPoint2, validIntersections[i+1], validIntersections[i]);
+	for (size_t i = 0; i < intersections.size()-1; i++) {
+        std::cout << "idx1: " << intersections[i+1].index << " idx2: "
+                  << intersections[i].index << std::endl;
+		Path newPath(path.keyPoint2, intersections[i+1], intersections[i]);
 		newPathList.push_back(newPath);
 	}
     
