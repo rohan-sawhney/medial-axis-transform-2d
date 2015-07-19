@@ -90,6 +90,7 @@ struct Utils
 	}
     
     // computes equation of a circle given 1 point on the circle and 2 line segments tangent to it
+    // assumes edges are not parallel
     static int findCircle(const Edge& e1, const Edge& e2, const Vector2d& p, Vector2d& c)
     {
         return 0;
@@ -102,6 +103,7 @@ struct Utils
     }
     
     // computes equation of a circle given 3 points on the circle
+    // assumes points are not collinear
     static double findCircle(const Vector2d& p1, const Vector2d& p2, const Vector2d& p3, Vector2d& c)
     {
         double dy1 = p2.y() - p1.y();

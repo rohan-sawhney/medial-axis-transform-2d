@@ -23,19 +23,6 @@ struct Parabola
 	}
 	Parabola(const Parabola& p): a(p.a), b(p.b), c(p.c), h(p.h), k(p.k), set(p.set) {}
 
-	// assignment operator
-	Parabola& operator=(const Parabola& p)
-	{
-		a = p.a;
-		b = p.b;
-		c = p.c;
-		h = p.h;
-		k = p.k;
-		set = p.set;
-
-		return *this;
-	}
-
 	// returns the y value of a point on the parabola given x
 	double getY(const double& x) const
 	{

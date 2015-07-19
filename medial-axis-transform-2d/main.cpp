@@ -120,12 +120,16 @@ void display()
         // draw keypoints
         glPointSize(4.0);
         glBegin(GL_POINTS);
-        glColor3f(1.0f, 1.0f, 0.0f);
         for (int i = 0; i < step; i++) {
+            glColor3f(1.0f, 1.0f, 0.0f);
             Path path = medialPaths[i];
             if (i == 0) {
                 glVertex2f(path.keyPoint1.x(), path.keyPoint1.y());
             }
+            
+            if (path.keyPoint2.isTransition) {
+                glColor3f(1.0f, 0.65f, 0.0f);
+            } 
             
             glVertex2f(path.keyPoint2.x(), path.keyPoint2.y());
         }

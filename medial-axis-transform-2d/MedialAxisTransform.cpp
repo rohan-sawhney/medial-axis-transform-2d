@@ -349,7 +349,7 @@ void MedialAxisTransform::handleTransitions(std::vector<BoundaryElement>& inters
     }
 }
 
-void MedialAxisTransform::initializeNewPaths(const Path& path, std::vector<Path>& newPathList)
+void MedialAxisTransform::initializeNewPaths(Path& path, std::vector<Path>& newPathList)
 {
     // get intersecting boundary elements
     std::vector<BoundaryElement> intersections;
@@ -357,7 +357,7 @@ void MedialAxisTransform::initializeNewPaths(const Path& path, std::vector<Path>
     
 	// handle transitions
 	handleTransitions(intersections);
-
+    
 	// populate path list
 	newPathList.clear();
 	for (size_t i = 0; i < intersections.size()-1; i++) {
@@ -388,6 +388,8 @@ std::vector<Path> MedialAxisTransform::run()
 		tracePath(path, medialPaths);
 		if (path.keyPoint2.radius != 0.0) {
 			initializeNewPaths(path, newPathList);
+            if (newPathList.size() == 1) medialPaths[medialPaths.size()-1].keyPoint2.isTransition = true;
+            
 			for (int i = 0; i < newPathList.size(); i++) {
 				pathStack.push(newPathList[i]);
 			}

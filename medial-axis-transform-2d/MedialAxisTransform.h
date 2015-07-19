@@ -37,7 +37,7 @@ private:
 	void handleTransitions(std::vector<BoundaryElement>& intersections);
 
 	// initializes new paths based on previous key point and governors
-	void initializeNewPaths(const Path& path, std::vector<Path>& newPathList);
+	void initializeNewPaths(Path& path, std::vector<Path>& newPathList);
 
 	// member variable
 	std::vector<BoundaryElement> boundaryElements;
