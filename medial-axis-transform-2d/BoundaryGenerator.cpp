@@ -11,8 +11,8 @@ Vector2d concave1[] = {Vector2d(250,100), Vector2d(100,400), Vector2d(250,300), 
 Vector2d concave2[] = {Vector2d(100,250), Vector2d(250,300), Vector2d(300,450), Vector2d(350,300), 
 					   Vector2d(500,250), Vector2d(350,200), Vector2d(300,50), Vector2d(250,200)};
 Vector2d concave3[] = {Vector2d(200,100), Vector2d(200,400), Vector2d(400,400), Vector2d(400,350),
-                       Vector2d(250,350), Vector2d(250,275), Vector2d(400,275), Vector2d(400,225),
-                       Vector2d(250,225), Vector2d(250,150), Vector2d(400,150), Vector2d(400,100)};
+                       Vector2d(250,350), Vector2d(250,275), Vector2d(400,275), Vector2d(400,200),
+                       Vector2d(250,200), Vector2d(250,150), Vector2d(400,150), Vector2d(400,100)};
 Vector2d concave4[] = {Vector2d(269,553), Vector2d(316,552), Vector2d(321,366), Vector2d(356,313),
 					   Vector2d(424,332), Vector2d(395,280), Vector2d(480,278), Vector2d(453,250), 
 					   Vector2d(485,204), Vector2d(453,202), Vector2d(485,157), Vector2d(370,148), 

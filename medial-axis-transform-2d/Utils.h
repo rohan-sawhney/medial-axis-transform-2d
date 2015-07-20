@@ -53,7 +53,7 @@ struct Utils
 		double m = (u.y() - p.y()) / dx;
 		for (double x = p.x(); x < 500; x = x + 0.0001) {
 			
-			double y = m*(x - p.x()) + p.y(); 
+			double y = m*(x - p.x()) + p.y();
 			if (std::abs(parabola.getY(x) - y) < 0.001) {
 				return Vector2d(x, y);
 			}
@@ -61,6 +61,15 @@ struct Utils
 
 		return Vector2d::Zero();
 	}
+    
+    static Edge tangentEdge(const Vector2d& p, const Vector2d& l1, const Vector2d& l2)
+    {
+        Vector2d l = (l1 + l2)/2;
+        l.normalize();
+        l = Vector2d(-l.y(),l.x());
+        
+        return Edge(p, p + l);
+    }
 
 	// finds closest point on an edge from another point not on the edge
 	static Vector2d closestPointOnEdge(const Vector2d& p, const Edge& e)
@@ -91,17 +100,25 @@ struct Utils
     
     // computes equation of a circle given 1 point on the circle and 2 line segments tangent to it
     // assumes edges are not parallel
-    static int findCircle(const Edge& e1, const Edge& e2, const Vector2d& p, Vector2d& c)
+    static double findCircle(const Edge& e1, const Edge& e2, const Edge& e3, Vector2d& c)
     {
-        return 0;
+        Vector2d tangent1 = e1.tangent();
+        Vector2d tangent2 = e2.tangent();
+        Vector2d tangent3 = e3.tangent();
+        
+        Vector2d int1 = lineIntersection(e1.vertex2, tangent1, e2.vertex1, -tangent2);
+        Vector2d bisector1 = (-tangent1 + tangent2) / 2;
+        bisector1.normalize();
+        
+        Vector2d int2 = lineIntersection(e2.vertex2, tangent2, e3.vertex1, -tangent3);
+        Vector2d bisector2 = (-tangent2 + tangent3) / 2;
+        bisector2.normalize();
+        
+        c = lineIntersection(int1, bisector1, int2, bisector2);
+
+        return distToEdge(c, e1);
     }
-    
-    // computes equation of a circle given 2 points on the circle and 1 line segments tangent to it
-    static int findCircle(const Edge& e, const Vector2d& p1, const Vector2d& p2, Vector2d& c)
-    {
-        return 0;
-    }
-    
+
     // computes equation of a circle given 3 points on the circle
     // assumes points are not collinear
     static double findCircle(const Vector2d& p1, const Vector2d& p2, const Vector2d& p3, Vector2d& c)

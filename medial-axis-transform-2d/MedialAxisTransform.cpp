@@ -55,6 +55,8 @@ void removeConcaveEdges(std::vector<std::pair<BoundaryElement, bool> >& intersec
     }
 }
 
+
+
 void MedialAxisTransform::setBoundaryElements(const std::vector<BoundaryElement>& be)
 {
 	boundaryElements = be;
@@ -93,7 +95,7 @@ void MedialAxisTransform::checkValidity(Path& path, const int traceType) const
             if (!(path.gov1.type == "Edge" && path.gov1.vertex1 == boundaryElements[i]) &&
                 !(path.gov2.type == "Edge" && path.gov2.vertex2 == boundaryElements[i])) {
                 
-                double d = (path.keyPoint2 - boundaryElements[i]).norm();
+                double d = (path.keyPoint1 - boundaryElements[i]).norm();
                 
                 if (d < minD) {
                     minD = d;
@@ -110,17 +112,24 @@ void MedialAxisTransform::checkValidity(Path& path, const int traceType) const
         Vector2d center;
         
         if (traceType == 0) {
-            radius = Utils::findCircle((Edge)path.gov1, (Edge)path.gov2,
-                                       (Vector2d)boundaryElements[index], center);
+            Edge e = Utils::tangentEdge(boundaryElements[index],
+                                        boundaryElements[index].halfLine1, boundaryElements[index].halfLine2);
+            
+            radius = Utils::findCircle(path.gov1, path.gov2, e, center);
             
         } else if (traceType == 1) {
-            if (path.gov1.type == "Edge" && path.gov1.type == "Vertex") {
-                radius = Utils::findCircle((Edge)path.gov1, (Vector2d)path.gov2,
-                                           (Vector2d)boundaryElements[index], center);
+            Edge e = Utils::tangentEdge(boundaryElements[index],
+                                        boundaryElements[index].halfLine1, boundaryElements[index].halfLine2);
+            
+            if (path.gov1.type == "Edge" && path.gov2.type == "Vertex") {
+                Edge govEdge = Utils::tangentEdge(path.gov2, path.gov2.halfLine1, path.gov2.halfLine2);
+                
+                radius = Utils::findCircle(path.gov1, govEdge, e, center);
                 
             } else {
-                radius = Utils::findCircle((Edge)path.gov2, (Vector2d)path.gov1,
-                                           (Vector2d)boundaryElements[index], center);
+                Edge govEdge = Utils::tangentEdge(path.gov1, path.gov1.halfLine1, path.gov1.halfLine2);
+                
+                radius = Utils::findCircle(govEdge, path.gov2, e, center);
             }
             
         } else {
@@ -128,6 +137,7 @@ void MedialAxisTransform::checkValidity(Path& path, const int traceType) const
                                        (Vector2d)boundaryElements[index], center);
         }
         
+        std::cout << "r: " << radius << " x: " << center.x() << " y: " << center.y() << std::endl;
         path.keyPoint2 = KeyPoint(center, radius);
     }
 }
@@ -202,6 +212,7 @@ void MedialAxisTransform::traceEdgeVertexPath(Path& path, const int order) const
 	double radius = (candPoint - focus).norm();
 
 	path.keyPoint2 = KeyPoint(candPoint, radius);
+    std::cout << "x: " << candPoint.x() << " y: " << candPoint.y() << " r: " << radius << std::endl;
 
 	checkValidity(path, 1);
 }
@@ -381,6 +392,7 @@ std::vector<Path> MedialAxisTransform::run()
 	initializeFirstPath(firstPath);
 	pathStack.push(firstPath);
 	
+    int i = 0;
 	while (!pathStack.empty()) {
 		Path path = pathStack.top();
 		pathStack.pop();
@@ -394,6 +406,9 @@ std::vector<Path> MedialAxisTransform::run()
 				pathStack.push(newPathList[i]);
 			}
 		}
+        
+       //i++;
+       // if (i == 2) break;
 	}
 	
 	return medialPaths;
