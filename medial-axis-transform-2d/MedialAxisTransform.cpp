@@ -55,8 +55,6 @@ void removeConcaveEdges(std::vector<std::pair<BoundaryElement, bool> >& intersec
     }
 }
 
-
-
 void MedialAxisTransform::setBoundaryElements(const std::vector<BoundaryElement>& be)
 {
 	boundaryElements = be;
@@ -84,7 +82,7 @@ void MedialAxisTransform::initializeFirstPath(Path& firstPath) const
 
 void MedialAxisTransform::checkValidity(Path& path, const int traceType) const
 {
-    // check if there is any boundary element inside the medial ball
+    // check if there is any boundary element inside the medial ball (has to be concave vertex)
     int index = -1;
     double minD = path.keyPoint2.radius;
     for (size_t i = 0; i < boundaryElements.size(); i++) {
@@ -107,7 +105,6 @@ void MedialAxisTransform::checkValidity(Path& path, const int traceType) const
     
     // if there is, determine new center and radius for medial ball
     if (index != -1) {
-        std::cout << "index: " << index << " traceType: " << traceType << std::endl;
         double radius;
         Vector2d center;
         
@@ -137,7 +134,6 @@ void MedialAxisTransform::checkValidity(Path& path, const int traceType) const
                                        (Vector2d)boundaryElements[index], center);
         }
         
-        std::cout << "r: " << radius << " x: " << center.x() << " y: " << center.y() << std::endl;
         path.keyPoint2 = KeyPoint(center, radius);
     }
 }
@@ -212,7 +208,6 @@ void MedialAxisTransform::traceEdgeVertexPath(Path& path, const int order) const
 	double radius = (candPoint - focus).norm();
 
 	path.keyPoint2 = KeyPoint(candPoint, radius);
-    std::cout << "x: " << candPoint.x() << " y: " << candPoint.y() << " r: " << radius << std::endl;
 
 	checkValidity(path, 1);
 }
@@ -248,7 +243,55 @@ void MedialAxisTransform::traceVertexVertexPath(Path& path) const
         checkValidity(path, 2);
         
     } else {
-        // TODO: Implement
+        // find boundary element closest to first keypoint
+        int index = -1;
+        double minD = 999;
+        for (size_t i = 0; i < boundaryElements.size(); i++) {
+            if (boundaryElements[i].index != path.gov1.index &&
+                boundaryElements[i].index != path.gov2.index) {
+                
+                double d = (path.keyPoint1 - boundaryElements[i]).norm();
+                if (d < minD) {
+                    minD = d;
+                    index = (int)i;
+                }
+                
+            }
+        }
+        
+        // remove concave edges
+        BoundaryElement be = boundaryElements[index];
+        if (be.type == "Edge") {
+            int prev = index - 1;
+            if (prev < 0) prev = (int)boundaryElements.size()-1;
+            
+            int next = index + 1;
+            if (next == (int)boundaryElements.size()) next = 0;
+                
+            if (boundaryElements[prev].type == "Vertex" &&
+                (path.keyPoint1 - boundaryElements[prev]).norm() < 0.01) { // FIX
+                be = boundaryElements[prev];
+                
+            } else if (boundaryElements[next].type == "Vertex" &&
+                       (path.keyPoint1 - boundaryElements[next]).norm() < 0.01) { // FIX
+                be = boundaryElements[next];
+            }
+        }
+        
+        // if there is, determine new center and radius for medial ball
+        double radius;
+        Vector2d center;
+        if (be.type == "Edge") { //
+            Edge govEdge1 = Utils::tangentEdge(path.gov1, path.gov1.halfLine1, path.gov1.halfLine2);
+            Edge govEdge2 = Utils::tangentEdge(path.gov2, path.gov2.halfLine1, path.gov2.halfLine2);
+            radius = Utils::findCircle(govEdge1, govEdge2, be, center);
+            
+        } else {
+            radius = Utils::findCircle((Vector2d)path.gov1, (Vector2d)path.gov2,
+                                       (Vector2d)be, center);
+        }
+        
+        path.keyPoint2 = KeyPoint(center, radius);
     }
 }
 
@@ -392,7 +435,6 @@ std::vector<Path> MedialAxisTransform::run()
 	initializeFirstPath(firstPath);
 	pathStack.push(firstPath);
 	
-    int i = 0;
 	while (!pathStack.empty()) {
 		Path path = pathStack.top();
 		pathStack.pop();
@@ -406,9 +448,6 @@ std::vector<Path> MedialAxisTransform::run()
 				pathStack.push(newPathList[i]);
 			}
 		}
-        
-       //i++;
-       // if (i == 2) break;
 	}
 	
 	return medialPaths;
