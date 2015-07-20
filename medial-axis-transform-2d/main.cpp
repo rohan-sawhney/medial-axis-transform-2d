@@ -26,6 +26,15 @@ bool showKeyPoint = true;
 bool showPath = true;
 bool showRadius = true;
 
+void printInstructions()
+{
+    std::cout << "Press q,w,e,r,t,y,u,i for different test shapes."
+              << " Hit enter to draw medial axis one path at a time."
+              << " Yellow points are keypoints on the medial axis."
+              << " Orange points represent transitions.\n\n"
+              << std::endl;
+}
+
 void init2D()
 {
     glClearColor(0.0, 0.0, 0.0, 1.0);
@@ -213,6 +222,7 @@ int main(int argc, char** argv)
     mat.setBoundaryElements(boundaryElements);
     medialPaths = mat.run();
     
+    printInstructions();
     glutInit(&argc,argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
     glutInitWindowSize(gridX, gridY);
