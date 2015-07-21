@@ -10,7 +10,7 @@
 void removeConcaveEdges(std::vector<std::pair<BoundaryElement, bool> >& intersectionElements)
 {
     size_t size = intersectionElements.size();
-    
+
     // check if gov1 is a concave vertex
     if (intersectionElements[0].first.type == "Vertex") {
         // the first element could be edge 1 or edge 2
@@ -269,11 +269,11 @@ void MedialAxisTransform::traceVertexVertexPath(Path& path) const
             if (next == (int)boundaryElements.size()) next = 0;
                 
             if (boundaryElements[prev].type == "Vertex" &&
-                (path.keyPoint1 - boundaryElements[prev]).norm() < 0.01) { // FIX
+                (path.keyPoint1 - boundaryElements[prev]).norm() < 0.01) { // FIX: Should be less that epsilon
                 be = boundaryElements[prev];
                 
             } else if (boundaryElements[next].type == "Vertex" &&
-                       (path.keyPoint1 - boundaryElements[next]).norm() < 0.01) { // FIX
+                       (path.keyPoint1 - boundaryElements[next]).norm() < 0.01) { // FIX: Should be less that epsilon 
                 be = boundaryElements[next];
             }
         }
@@ -361,10 +361,10 @@ void MedialAxisTransform::handleTransitions(std::vector<BoundaryElement>& inters
     for (size_t i = 0; i < intersections.size()-1; i++) {
         if (intersections[i].type == "Vertex") {
             if (boundaryElements[intersections[i].index].transForward == intersections[i+1].index) {
-                boundaryElements[intersections[i].index].shouldTransition = true;
+                boundaryElements[intersections[i].index].shouldTransitionForward = true;
                 
             } else {
-                boundaryElements[intersections[i].index].shouldTransition = false;
+                boundaryElements[intersections[i].index].shouldTransitionForward = false;
                 boundaryElements[intersections[i].index].transForward = intersections[i+1].index;
             }
         }
@@ -375,10 +375,10 @@ void MedialAxisTransform::handleTransitions(std::vector<BoundaryElement>& inters
     for (size_t i = intersections.size()-1; i > 0; i--) {
         if (intersections[i].type == "Vertex") {
             if (boundaryElements[intersections[i].index].transBack == intersections[i-1].index) {
-                boundaryElements[intersections[i].index].shouldTransition = true;
+                boundaryElements[intersections[i].index].shouldTransitionBack = true;
                 
             } else {
-                boundaryElements[intersections[i].index].shouldTransition = false;
+                boundaryElements[intersections[i].index].shouldTransitionBack = false;
                 boundaryElements[intersections[i].index].transBack = intersections[i-1].index;
             }
         }
@@ -386,7 +386,7 @@ void MedialAxisTransform::handleTransitions(std::vector<BoundaryElement>& inters
     
     // transition forward
     for (size_t i = 0; i < intersections.size()-1; i++) {
-        if (boundaryElements[intersections[i].index].shouldTransition) {
+        if (boundaryElements[intersections[i].index].shouldTransitionForward) {
             int nextIndex = intersections[i].index+1;
             if (nextIndex == boundaryElements.size()) nextIndex = 0;
             intersections[i] = boundaryElements[nextIndex];
@@ -395,7 +395,7 @@ void MedialAxisTransform::handleTransitions(std::vector<BoundaryElement>& inters
     
     // transition backward
     for (size_t i = intersections.size()-1; i > 0; i--) {
-        if (boundaryElements[intersections[i].index].shouldTransition) {
+        if (boundaryElements[intersections[i].index].shouldTransitionBack) {
             int nextIndex = intersections[i].index-1;
             if (nextIndex < 0) nextIndex = (int)boundaryElements.size()-1;
             intersections[i] = boundaryElements[nextIndex];
@@ -408,8 +408,8 @@ void MedialAxisTransform::initializeNewPaths(Path& path, std::vector<Path>& newP
     // get intersecting boundary elements
     std::vector<BoundaryElement> intersections;
     findIntersections(path, intersections);
-    
-	// handle transitions
+
+    // handle transitions
 	handleTransitions(intersections);
     
 	// populate path list
