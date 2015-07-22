@@ -2,29 +2,29 @@
 #define PARABOLA_H
 
 #include <math.h>
+#include <utility>
 #include "KeyPoint.h"
 #include "Edge.h"
 
 struct Parabola 
 {
 	// constructors
-	Parabola() {}
+    Parabola(): set(0) {}
 	Parabola(const Vector2d& focus, const Edge& directrix)
 	{
 		h = focus.x();
 		k = focus.y();
-
-		double m = directrix.slope();
-		a = m;
-		b = -1;
-		c = directrix.vertex1.y() - m * directrix.vertex1.x();
-
-		set = true;
+        
+        a = directrix.vertex2.y() - directrix.vertex1.y();
+        b = -(directrix.vertex2.x() - directrix.vertex1.x());
+        c = directrix.vertex2.x()*directrix.vertex1.y() - directrix.vertex1.x()*directrix.vertex2.y();
+        
+        set = 1;
 	}
 	Parabola(const Parabola& p): a(p.a), b(p.b), c(p.c), h(p.h), k(p.k), set(p.set) {}
 
 	// returns the y value of a point on the parabola given x
-	double getY(const double& x) const
+    std::pair<double, double> getY(const double& x) const
 	{
 		// (ax + by + c)^2 / (a^2 + b^2) = (x-h)^2 + (y-k)^2
 		// solve for y in terms of x - use wolfram!
@@ -38,9 +38,14 @@ struct Parabola
 		double exp3 = ah + bk + c;
 		double exp4 = -ah + 2*a*x + bk + c;
 
-		double y = (exp1 - sqrt(exp2*exp3*exp4)) / a2;
+		double y1 = (exp1 - sqrt(exp2*exp3*exp4)) / a2;
+        double y2 = (exp1 + sqrt(exp2*exp3*exp4)) / a2;
 
-		return y;
+        std::pair<double, double> ys;
+        ys.first = y1;
+        ys.second = y2;
+        
+		return ys;
 	}
 
 	// member variables
@@ -49,7 +54,7 @@ struct Parabola
 	double c;
 	double h;
 	double k;
-	bool set;
+	int set;
 };
 
 #endif

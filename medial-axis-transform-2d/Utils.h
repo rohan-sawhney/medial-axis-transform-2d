@@ -39,22 +39,25 @@ struct Utils
 	}
 
 	// checks if line intersects with parabola
-	static Vector2d parabolaIntersection(const Parabola& parabola, 
-										 const Vector2d& p, const Vector2d& l) 
+	static Vector2d parabolaIntersection(const Parabola& parabola,
+										 const Vector2d& p, const Vector2d& l)
 	{
 		// FIX: brute force method not accurate!
 		// Analytic approach: y_parabola = y_line => ax^2 + bx + c = mx + c => solve for x
 		Vector2d u = p + l;
 		double dx = u.x() - p.x();
 		if (dx == 0) {
-			return Vector2d(p.x(), parabola.getY(p.x()));
+            std::pair<double, double> ys = parabola.getY(p.x());
+			return Vector2d(p.x(), ys.first);
 		}
 
 		double m = (u.y() - p.y()) / dx;
-		for (double x = p.x(); x < 500; x = x + 0.0001) {
+		for (double x = 100; x < 500; x = x + 0.0001) {
 			
 			double y = m*(x - p.x()) + p.y();
-			if (std::abs(parabola.getY(x) - y) < 0.001) {
+            std::pair<double, double> ys = parabola.getY(x);
+            
+            if (std::abs(ys.first - y) < 0.001 || std::abs(ys.second - y) < 0.001) {
 				return Vector2d(x, y);
 			}
 		}

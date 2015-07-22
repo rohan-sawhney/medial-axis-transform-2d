@@ -83,6 +83,7 @@ void MedialAxisTransform::initializeFirstPath(Path& firstPath) const
 void MedialAxisTransform::checkValidity(Path& path, const int traceType) const
 {
     // check if there is any boundary element inside the medial ball (has to be concave vertex)
+    // FIX
     int index = -1;
     double minD = path.keyPoint2.radius;
     for (size_t i = 0; i < boundaryElements.size(); i++) {
@@ -90,19 +91,20 @@ void MedialAxisTransform::checkValidity(Path& path, const int traceType) const
             boundaryElements[i].index != path.gov1.index &&
             boundaryElements[i].index != path.gov2.index) {
             
-            if (!(path.gov1.type == "Edge" && path.gov1.vertex1 == boundaryElements[i]) &&
-                !(path.gov2.type == "Edge" && path.gov2.vertex2 == boundaryElements[i])) {
+            if (!(path.gov1.type == "Edge" && path.gov1.vertex2 == boundaryElements[i]) &&
+                !(path.gov2.type == "Edge" && path.gov2.vertex1 == boundaryElements[i])) {
                 
                 double d = (path.keyPoint1 - boundaryElements[i]).norm();
                 
-                if (d < minD) {
+                if (fabs(d - path.keyPoint2.radius) > 0.01 && d < minD) {
                     minD = d;
-                    index = (int)i;
+                    index = boundaryElements[i].index;
                 }
             }
         }
     }
     
+    std::cout << "cv index: " << index << std::endl;
     // if there is, determine new center and radius for medial ball
     if (index != -1) {
         double radius;
@@ -163,7 +165,7 @@ void MedialAxisTransform::traceEdgeEdgePath(Path& path) const
 		double radius = Utils::distToEdge(candPoint, path.gov1);
 
 		path.keyPoint2 = KeyPoint(candPoint, radius);
-
+        
 		checkValidity(path, 0);
 	}
 }
@@ -179,7 +181,7 @@ void MedialAxisTransform::traceEdgeVertexPath(Path& path, const int order) const
 		Edge directrix = path.gov2;
 		path.parabola = Parabola(focus, directrix);
 
-		// compute candidate points 
+		// compute candidate points
 		candPoint1 = Utils::parabolaIntersection(path.parabola,
 												 (Vector2d)path.gov1, path.gov1.halfLine1);
 
@@ -208,7 +210,14 @@ void MedialAxisTransform::traceEdgeVertexPath(Path& path, const int order) const
 	double radius = (candPoint - focus).norm();
 
 	path.keyPoint2 = KeyPoint(candPoint, radius);
-
+    
+    // Works, but don't know why?
+    if (path.keyPoint1.y() <= focus.y()) {
+        path.parabola.set = 1;
+    } else {
+        path.parabola.set = 2;
+    }
+    
 	checkValidity(path, 1);
 }
 
@@ -435,6 +444,7 @@ std::vector<Path> MedialAxisTransform::run()
 	initializeFirstPath(firstPath);
 	pathStack.push(firstPath);
 	
+    int i = 0;
 	while (!pathStack.empty()) {
 		Path path = pathStack.top();
 		pathStack.pop();
@@ -448,6 +458,9 @@ std::vector<Path> MedialAxisTransform::run()
 				pathStack.push(newPathList[i]);
 			}
 		}
+        
+        i++;
+        if (i == 5) break;
 	}
 	
 	return medialPaths;
