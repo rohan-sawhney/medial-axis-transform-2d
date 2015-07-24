@@ -461,7 +461,7 @@ std::vector<Path> MedialAxisTransform::run()
 	initializeFirstPath(firstPath);
 	pathStack.push(firstPath);
 	
-	while (!pathStack.empty()) {
+ 	while (!pathStack.empty()) {
 		Path path = pathStack.top();
 		pathStack.pop();
 
