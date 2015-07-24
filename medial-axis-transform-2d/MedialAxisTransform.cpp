@@ -83,59 +83,71 @@ void MedialAxisTransform::initializeFirstPath(Path& firstPath) const
 void MedialAxisTransform::checkValidity(Path& path, const int traceType) const
 {
     // check if there is any boundary element inside the medial ball (has to be concave vertex)
-    // FIX
-    int index = -1;
-    double minD = path.keyPoint2.radius;
+    bool isValid = true;
     for (size_t i = 0; i < boundaryElements.size(); i++) {
         if (boundaryElements[i].type == "Vertex" &&
             boundaryElements[i].index != path.gov1.index &&
             boundaryElements[i].index != path.gov2.index) {
             
-            if (!(path.gov1.type == "Edge" && path.gov1.vertex2 == boundaryElements[i]) &&
-                !(path.gov2.type == "Edge" && path.gov2.vertex1 == boundaryElements[i])) {
+            if (!(path.gov1.type == "Edge" && path.gov1.vertex1 == boundaryElements[i]) &&
+                !(path.gov2.type == "Edge" && path.gov2.vertex2 == boundaryElements[i])) {
                 
-                double d = (path.keyPoint1 - boundaryElements[i]).norm();
-                
-                if (fabs(d - path.keyPoint2.radius) > 0.01 && d < minD) {
-                    minD = d;
-                    index = boundaryElements[i].index;
+                double d = (path.keyPoint2 - boundaryElements[i]).norm();
+                if (fabs(d - path.keyPoint2.radius) > 0.01 && d < path.keyPoint2.radius) {
+                    isValid = false;
                 }
             }
         }
     }
     
-    std::cout << "cv index: " << index << std::endl;
     // if there is, determine new center and radius for medial ball
-    if (index != -1) {
+    if (!isValid) {
+        // find the closest boundary element to the first keypoint
+        int index = -1;
+        double minD = 999;
+        
+        size_t size = boundaryElements.size();
+        int startIndex = path.gov2.index+1;
+        if (startIndex == size) startIndex = 0;
+        
+        int endIndex = path.gov1.index;
+        if (endIndex < path.gov2.index) endIndex += size;
+        
+        for (size_t i = startIndex; i < endIndex; i++) {
+            size_t j = i;
+            if (j >= size) j -= size;
+        
+            if (boundaryElements[j].type == "Vertex") {
+                double d = (path.keyPoint1 - boundaryElements[j]).norm();
+                if (fabs(d - minD) > 0.01 && d < minD) {
+                    minD = d;
+                    index = boundaryElements[j].index;
+                }
+            }
+        }
+        
         double radius;
         Vector2d center;
         
         if (traceType == 0) {
-            Edge e = Utils::tangentEdge(boundaryElements[index],
-                                        boundaryElements[index].halfLine1, boundaryElements[index].halfLine2);
-            
-            radius = Utils::findCircle(path.gov1, path.gov2, e, center);
+            radius = Utils::findCircle((Edge)path.gov1, (Edge)path.gov2,
+                                       (Vector2d)boundaryElements[index], center);
             
         } else if (traceType == 1) {
-            Edge e = Utils::tangentEdge(boundaryElements[index],
-                                        boundaryElements[index].halfLine1, boundaryElements[index].halfLine2);
-            
-            if (path.gov1.type == "Edge" && path.gov2.type == "Vertex") {
-                Edge govEdge = Utils::tangentEdge(path.gov2, path.gov2.halfLine1, path.gov2.halfLine2);
-                
-                radius = Utils::findCircle(path.gov1, govEdge, e, center);
+            if (path.gov2.type == "Vertex") {
+                radius = Utils::findCircle((Edge)path.gov1, (Vector2d)path.gov2,
+                                           (Vector2d)boundaryElements[index], center);
                 
             } else {
-                Edge govEdge = Utils::tangentEdge(path.gov1, path.gov1.halfLine1, path.gov1.halfLine2);
-                
-                radius = Utils::findCircle(govEdge, path.gov2, e, center);
+                radius = Utils::findCircle((Edge)path.gov2, (Vector2d)boundaryElements[index],
+                                           (Vector2d)path.gov1, center);
             }
             
         } else {
             radius = Utils::findCircle((Vector2d)path.gov1, (Vector2d)path.gov2,
                                        (Vector2d)boundaryElements[index], center);
         }
-        
+
         path.keyPoint2 = KeyPoint(center, radius);
     }
 }
@@ -201,7 +213,7 @@ void MedialAxisTransform::traceEdgeVertexPath(Path& path, const int order) const
 												 (Vector2d)path.gov2, path.gov2.halfLine2);
 	}
 
-	// find the closer candidate key point 
+	// find the closer candidate key point
 	Vector2d candPoint = (path.keyPoint1 - candPoint1).squaredNorm() < 
 						 (path.keyPoint1 - candPoint2).squaredNorm() ? 
 						 candPoint1 : candPoint2;
@@ -211,7 +223,7 @@ void MedialAxisTransform::traceEdgeVertexPath(Path& path, const int order) const
 
 	path.keyPoint2 = KeyPoint(candPoint, radius);
     
-    // Works, but don't know why?
+    // FIX: Works, but don't know why?
     if (path.keyPoint1.y() <= focus.y()) {
         path.parabola.set = 1;
     } else {
@@ -253,20 +265,26 @@ void MedialAxisTransform::traceVertexVertexPath(Path& path) const
         
     } else {
         // find boundary element closest to first keypoint
-        int index = -1;
-        double minD = 999;
-        for (size_t i = 0; i < boundaryElements.size(); i++) {
-            if (boundaryElements[i].index != path.gov1.index &&
-                boundaryElements[i].index != path.gov2.index) {
-                
-                double d = (path.keyPoint1 - boundaryElements[i]).norm();
-                if (d < minD) {
-                    minD = d;
-                    index = (int)i;
-                }
-                
+         int index = -1;
+         double minD = 999;
+         
+         size_t size = boundaryElements.size();
+         int startIndex = path.gov2.index+1;
+         if (startIndex == size) startIndex = 0;
+         
+         int endIndex = path.gov1.index;
+         if (endIndex < path.gov2.index) endIndex += size;
+         
+         for (size_t i = startIndex; i < endIndex; i++) {
+            size_t j = i;
+            if (j >= size) j -= size;
+         
+            double d = (path.keyPoint1 - boundaryElements[j]).norm();
+            if (fabs(d - minD) > 0.01 && d < minD) {
+                minD = d;
+                index = boundaryElements[j].index;
             }
-        }
+         }
         
         // remove concave edges
         BoundaryElement be = boundaryElements[index];
@@ -290,10 +308,9 @@ void MedialAxisTransform::traceVertexVertexPath(Path& path) const
         // if there is, determine new center and radius for medial ball
         double radius;
         Vector2d center;
-        if (be.type == "Edge") { //
-            Edge govEdge1 = Utils::tangentEdge(path.gov1, path.gov1.halfLine1, path.gov1.halfLine2);
-            Edge govEdge2 = Utils::tangentEdge(path.gov2, path.gov2.halfLine1, path.gov2.halfLine2);
-            radius = Utils::findCircle(govEdge1, govEdge2, be, center);
+         
+        if (be.type == "Edge") {
+            radius = Utils::findCircle((Edge)be, (Vector2d)path.gov2, (Vector2d)path.gov1, center);
             
         } else {
             radius = Utils::findCircle((Vector2d)path.gov1, (Vector2d)path.gov2,
@@ -444,7 +461,6 @@ std::vector<Path> MedialAxisTransform::run()
 	initializeFirstPath(firstPath);
 	pathStack.push(firstPath);
 	
-    int i = 0;
 	while (!pathStack.empty()) {
 		Path path = pathStack.top();
 		pathStack.pop();
@@ -458,9 +474,6 @@ std::vector<Path> MedialAxisTransform::run()
 				pathStack.push(newPathList[i]);
 			}
 		}
-        
-        i++;
-        if (i == 5) break;
 	}
 	
 	return medialPaths;

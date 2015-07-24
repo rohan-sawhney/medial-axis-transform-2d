@@ -5,6 +5,7 @@
 #include <utility>
 #include "KeyPoint.h"
 #include "Edge.h"
+#include <iostream>
 
 struct Parabola 
 {
@@ -29,18 +30,29 @@ struct Parabola
 		// (ax + by + c)^2 / (a^2 + b^2) = (x-h)^2 + (y-k)^2
 		// solve for y in terms of x - use wolfram!
 
-		double a2 = a*a;
-		double b2 = b*b;
-		double ah = a*h;
-		double bk = b*k;
-		double exp1 = a2*k + a*b*x + b2*k + b*c;
-		double exp2 = a2 + b2;
-		double exp3 = ah + bk + c;
-		double exp4 = -ah + 2*a*x + bk + c;
-
-		double y1 = (exp1 - sqrt(exp2*exp3*exp4)) / a2;
-        double y2 = (exp1 + sqrt(exp2*exp3*exp4)) / a2;
-
+        double y1 = 0;
+        double y2 = 0;
+        double a2 = a*a;
+        double b2 = b*b;
+        double ah = a*h;
+        double bk = b*k;
+        double bh = b*h;
+        
+        if (a == 0) {
+            y1 = (bh*bh - 2*b2*h*x + b2*k*k + b2*x*x - c*c) / (2*b*(bk + c));
+            y2 = y1;
+            
+        } else {
+            
+            double exp1 = a2*k + a*b*x + b2*k + b*c;
+            double exp2 = a2 + b2;
+            double exp3 = ah + bk + c;
+            double exp4 = -ah + 2*a*x + bk + c;
+            
+            y1 = (exp1 - sqrt(exp2*exp3*exp4)) / a2;
+            y2 = (exp1 + sqrt(exp2*exp3*exp4)) / a2;
+        }
+        
         std::pair<double, double> ys;
         ys.first = y1;
         ys.second = y2;

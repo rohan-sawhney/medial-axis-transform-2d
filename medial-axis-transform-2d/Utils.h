@@ -48,8 +48,8 @@ struct Utils
 		double dx = u.x() - p.x();
 		if (dx == 0) {
             std::pair<double, double> ys = parabola.getY(p.x());
-			return Vector2d(p.x(), ys.first);
-		}
+            return Vector2d(p.x(), ys.first);
+        }
 
 		double m = (u.y() - p.y()) / dx;
 		for (double x = 100; x < 500; x = x + 0.0001) {
@@ -65,15 +65,6 @@ struct Utils
 		return Vector2d::Zero();
 	}
     
-    static Edge tangentEdge(const Vector2d& p, const Vector2d& l1, const Vector2d& l2)
-    {
-        Vector2d l = (l1 + l2)/2;
-        l.normalize();
-        l = Vector2d(-l.y(),l.x());
-        
-        return Edge(p, p + l);
-    }
-
 	// finds closest point on an edge from another point not on the edge
 	static Vector2d closestPointOnEdge(const Vector2d& p, const Edge& e)
 	{
@@ -83,7 +74,7 @@ struct Utils
 				    (p.y() - e.vertex1.y()) * dv.y()) / 
 					(dv.x()*dv.x() + dv.y()*dv.y());
 
-		if (u <= 0) {
+        if (u <= 0) {
 			return e.vertex1;
 
 		} else if (u >= 1) {
@@ -101,25 +92,57 @@ struct Utils
 		return (p - m).norm();
 	}
     
-    // computes equation of a circle given 1 point on the circle and 2 line segments tangent to it
-    // assumes edges are not parallel
-    static double findCircle(const Edge& e1, const Edge& e2, const Edge& e3, Vector2d& c)
+    // returns center of circle given edge, edge, point
+    static double findCircle(const Edge& e1, const Edge& e2, const Vector2d& p, Vector2d& c)
     {
+        // FIX: brute force approach!
         Vector2d tangent1 = e1.tangent();
         Vector2d tangent2 = e2.tangent();
-        Vector2d tangent3 = e3.tangent();
         
-        Vector2d int1 = lineIntersection(e1.vertex2, tangent1, e2.vertex1, -tangent2);
+        Vector2d intersection = lineIntersection(e1.vertex2, tangent1, e2.vertex1, -tangent2);
         Vector2d bisector1 = (-tangent1 + tangent2) / 2;
         bisector1.normalize();
+    
+        double r1 = rand();
+        double r2 = rand();
+        double r3 = rand();
         
-        Vector2d int2 = lineIntersection(e2.vertex2, tangent2, e3.vertex1, -tangent3);
-        Vector2d bisector2 = (-tangent2 + tangent3) / 2;
-        bisector2.normalize();
-        
-        c = lineIntersection(int1, bisector1, int2, bisector2);
+        double t = 0;
+        while (!(fabs(r1 - r2) < 0.001 && fabs(r2 - r3) < 0.001)) {
+            c = intersection + t*bisector1;
+            r1 = distToEdge(c, e1);
+            r2 = distToEdge(c, e2);
+            r3 = (c - p).norm();
 
-        return distToEdge(c, e1);
+            t += 0.001;
+        }
+        
+        return r1;
+    }
+    
+    // returns center of circle given edge, point, point
+    static double findCircle(const Edge& e, const Vector2d& p1, const Vector2d& p2, Vector2d& c)
+    {
+        // FIX: brute force approach!
+        Vector2d mid = (p1 + p2) / 2;
+        Edge ep(p1, p2);
+        Vector2d n = ep.normal();
+        
+        double r1 = rand();
+        double r2 = rand();
+        double r3 = rand();
+        
+        double t = 0;
+        while (!(fabs(r1 - r2) < 0.001 && fabs(r2 - r3) < 0.001)) {
+            c = mid + t*n;
+            r1 = distToEdge(c, e);
+            r2 = (c - p1).norm();
+            r3 = (c - p2).norm();
+            
+            t += 0.001;
+        }
+        
+        return r1;
     }
 
     // computes equation of a circle given 3 points on the circle
