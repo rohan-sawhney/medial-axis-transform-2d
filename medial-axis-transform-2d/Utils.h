@@ -6,11 +6,14 @@
 
 struct Utils 
 {
+    static double cross2d(const Vector2d& v1, const Vector2d& v2)
+    {
+        return v1.x()*v2.y() - v2.x()*v1.y();
+    }
+    
 	static bool inHalfPlane(const Vector2d& v1, const Vector2d& v2) 
 	{
-		double cross2d = v1.x()*v2.y() - v2.x()*v1.y();
-
-		return cross2d > 0.0;
+		return cross2d(v1, v2) > 0.0;
 	}
 
 	// checks whether two edges share a vertex
@@ -37,7 +40,7 @@ struct Utils
 
 		return Vector2d::Zero();
 	}
-
+    
 	// checks if line intersects with parabola
 	static Vector2d parabolaIntersection(const Parabola& parabola,
 										 const Vector2d& p, const Vector2d& l)
@@ -92,6 +95,25 @@ struct Utils
 		return (p - m).norm();
 	}
     
+    static double findCircle(const Edge& e1, const Edge& e2, const Edge& e3, Vector2d& c)
+    {
+        Vector2d tangent1 = e1.tangent();
+        Vector2d tangent2 = e2.tangent();
+        Vector2d tangent3 = e3.tangent();
+        
+        Vector2d int1 = lineIntersection(e1.vertex2, tangent1, e2.vertex1, -tangent2);
+        Vector2d bisector1 = (-tangent1 + tangent2) / 2;
+        bisector1.normalize();
+        
+        Vector2d int2 = lineIntersection(e2.vertex2, tangent2, e3.vertex1, -tangent3);
+        Vector2d bisector2 = (-tangent2 + tangent3) / 2;
+        bisector2.normalize();
+        
+        c = lineIntersection(int1, bisector1, int2, bisector2);
+        
+        return distToEdge(c, e1);
+    }
+    
     // returns center of circle given edge, edge, point
     static double findCircle(const Edge& e1, const Edge& e2, const Vector2d& p, Vector2d& c)
     {
@@ -113,7 +135,7 @@ struct Utils
             r1 = distToEdge(c, e1);
             r2 = distToEdge(c, e2);
             r3 = (c - p).norm();
-
+            
             t += 0.001;
         }
         

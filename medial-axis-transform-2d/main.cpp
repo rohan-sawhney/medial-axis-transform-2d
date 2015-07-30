@@ -28,10 +28,11 @@ bool showRadius = true;
 
 void printInstructions()
 {
-    std::cout << "Press q,w,e,r,t,y,u,i for different test shapes."
-              << " Hit enter to draw medial axis one path at a time."
+    std::cout << "Press q,w,e,r,t,y,u,i,o,p for different test shapes."
+              << " Hit space to draw medial axis one path at a time."
               << " Yellow points are keypoints on the medial axis."
-              << " Orange points represent transitions.\n\n"
+              << " Orange points represent transitions."
+              << " Blue boundary elements are the path governors.\n\n"
               << std::endl;
 }
 
@@ -76,17 +77,17 @@ void drawParabola(const Parabola& p, const Vector2d& start, const Vector2d& end)
     // FIX: GL_LINE_STRIP does not render for small "diff"
     glBegin(GL_LINE_STRIP);
     for (double x = startX; x < endX; x += dx) {
-        if (p.set == 1) {
+        //if (p.set == 1) {
             glVertex2f(x, p.getY(x).first);
-        }
+        //}
     }
     glEnd();
     
     glBegin(GL_LINE_STRIP);
     for (double x = startX; x < endX; x += dx) {
-        if (p.set == 2) {
+        //if (p.set == 2) {
             glVertex2f(x, p.getY(x).second);
-        }
+        //}
     }
     glEnd();
 }
@@ -94,19 +95,7 @@ void drawParabola(const Parabola& p, const Vector2d& start, const Vector2d& end)
 void display()
 {
     glClear(GL_COLOR_BUFFER_BIT);
-    
-    if (showBoundary) {
-        // draw boundary
-        glColor3f(1.0f, 0.0f, 1.0f);
-        for (size_t i = 0; i < boundaryElements.size(); i++) {
-            if (boundaryElements[i].type == "Edge") {
-                glBegin(GL_LINES);
-                glVertex2f(boundaryElements[i].vertex1.x(), boundaryElements[i].vertex1.y());
-                glVertex2f(boundaryElements[i].vertex2.x(), boundaryElements[i].vertex2.y());
-                glEnd();
-            }
-        }
-    }
+    glPointSize(4.0);
     
     if (showHalfline) {
         // draw halflines
@@ -137,7 +126,6 @@ void display()
     
     if (showKeyPoint) {
         // draw keypoints
-        glPointSize(4.0);
         glBegin(GL_POINTS);
         for (int i = 0; i < step; i++) {
             glColor3f(1.0f, 1.0f, 0.0f);
@@ -167,6 +155,34 @@ void display()
                 glBegin(GL_LINES);
                 glVertex2f(path.keyPoint1.x(), path.keyPoint1.y());
                 glVertex2f(path.keyPoint2.x(), path.keyPoint2.y());
+                glEnd();
+            }
+            
+            if (i == step-1) {
+                boundaryElements[path.gov1.index].isGov = true;
+                boundaryElements[path.gov2.index].isGov = true;
+            }
+        }
+    }
+    
+    if (showBoundary) {
+        // draw boundary
+        for (size_t i = 0; i < boundaryElements.size(); i++) {
+            if (boundaryElements[i].isGov) {
+                glColor3f(0.5f, 0.5f, 1.0f);
+                boundaryElements[i].isGov = false;
+            } else {
+                glColor3f(1.0f, 0.0f, 1.0f);
+            }
+            
+            if (boundaryElements[i].type == "Edge") {
+                glBegin(GL_LINES);
+                glVertex2f(boundaryElements[i].vertex1.x(), boundaryElements[i].vertex1.y());
+                glVertex2f(boundaryElements[i].vertex2.x(), boundaryElements[i].vertex2.y());
+                glEnd();
+            } else {
+                glBegin(GL_POINTS);
+                glVertex2f(boundaryElements[i].x(), boundaryElements[i].y());
                 glEnd();
             }
         }
@@ -228,11 +244,11 @@ void keyboard(unsigned char key, int x, int y)
 
 int main(int argc, char** argv) 
 {
+    printInstructions();
     boundaryElements = bg.getBoundaryElements('q');
     mat.setBoundaryElements(boundaryElements);
     medialPaths = mat.run();
     
-    printInstructions();
     glutInit(&argc,argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
     glutInitWindowSize(gridX, gridY);

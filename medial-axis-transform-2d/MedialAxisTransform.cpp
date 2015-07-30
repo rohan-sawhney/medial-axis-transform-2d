@@ -80,6 +80,120 @@ void MedialAxisTransform::initializeFirstPath(Path& firstPath) const
 	}
 }
 
+void MedialAxisTransform::setNewKeypoint(Path& path, const int traceType) const
+{
+    // find the closest boundary element to the first keypoint
+    int index = -1;
+    double minD = 999;
+    
+    size_t size = boundaryElements.size();
+    int startIndex = path.gov2.index+1;
+    if (startIndex == size) startIndex = 0;
+    
+    int endIndex = path.gov1.index;
+    if (endIndex < path.gov2.index) endIndex += size;
+    
+    for (size_t i = startIndex; i < endIndex; i++) {
+        
+        size_t j = i;
+        if (j >= size) j -= size;
+        
+        double d = 999;
+        if (boundaryElements[j].type == "Edge") {
+            // if an edge, then governor cannot be an adjacent vertex or edge
+            bool exp1 = path.gov1.type == "Vertex" && boundaryElements[j].vertex2 == path.gov1;
+            bool exp2 = path.gov1.type == "Edge" && boundaryElements[j].vertex2 == path.gov1.vertex1;
+            bool exp3 = path.gov2.type == "Vertex" && boundaryElements[j].vertex1 == path.gov2;
+            bool exp4 = path.gov2.type == "Edge" && boundaryElements[j].vertex1 == path.gov2.vertex2;
+            
+            if (!(exp1 || exp2 || exp3 || exp4)) {
+                d = Utils::distToEdge(path.keyPoint1, boundaryElements[j]);
+            }
+            
+        } else {
+            // if a vertex, then governor cannot be an adjacent edge
+            
+            if (!((path.gov1.type == "Edge" && path.gov1.vertex1 == boundaryElements[j]) ||
+                  (path.gov2.type == "Edge" && path.gov2.vertex2 == boundaryElements[j]))) {
+                d = (path.keyPoint1 - boundaryElements[j]).norm();
+            }
+        }
+        
+        if (d < minD) {
+            minD = d;
+            index = boundaryElements[j].index;
+        }
+    }
+    
+    // remove concave edges
+    if (boundaryElements[index].type == "Edge") {
+        int prev = index - 1;
+        if (prev < 0) prev = (int)boundaryElements.size()-1;
+        
+        int next = index + 1;
+        if (next == (int)boundaryElements.size()) next = 0;
+        
+        double d = Utils::distToEdge(path.keyPoint1, boundaryElements[index]);
+        if (boundaryElements[prev].type == "Vertex" &&
+            fabs((path.keyPoint1 - boundaryElements[prev]).norm() - d) < 0.01) {
+            index = prev;
+            
+        } else if (boundaryElements[next].type == "Vertex" &&
+                   fabs((path.keyPoint1 - boundaryElements[next]).norm() - d) < 0.01) {
+            index = next;
+        }
+    }
+    
+    std::cout << "cv index: " << index << " tt: " << traceType << std::endl;
+    double radius;
+    Vector2d center;
+    
+    if (traceType == 0) {
+        if (boundaryElements[index].type == "Edge") {
+            radius = Utils::findCircle((Edge)path.gov1, (Edge)path.gov2,
+                                       (Edge)boundaryElements[index], center);
+            
+        } else {
+            radius = Utils::findCircle((Edge)path.gov1, (Edge)path.gov2,
+                                       (Vector2d)boundaryElements[index], center);
+        }
+    
+    } else if (traceType == 1) {
+        if (boundaryElements[index].type == "Edge") {
+            if (path.gov2.type == "Vertex") {
+                radius = Utils::findCircle((Edge)boundaryElements[index], (Edge)path.gov1,
+                                           (Vector2d)path.gov2, center);
+            
+            } else {
+                radius = Utils::findCircle((Edge)path.gov2, (Edge)boundaryElements[index],
+                                           (Vector2d)path.gov1, center);
+            }
+            
+        } else {
+            if (path.gov2.type == "Vertex") {
+                radius = Utils::findCircle((Edge)path.gov1, (Vector2d)path.gov2,
+                                           (Vector2d)boundaryElements[index], center);
+                
+            } else {
+                radius = Utils::findCircle((Edge)path.gov2, (Vector2d)boundaryElements[index],
+                                           (Vector2d)path.gov1, center);
+            }
+        }
+        
+    } else {
+        if (boundaryElements[index].type == "Edge") {
+            radius = Utils::findCircle((Edge)boundaryElements[index],
+                                       (Vector2d)path.gov1, (Vector2d)path.gov2, center);
+            
+        } else {
+            radius = Utils::findCircle((Vector2d)path.gov1, (Vector2d)path.gov2,
+                                       (Vector2d)boundaryElements[index], center);
+        }
+    }
+    
+    path.keyPoint2 = KeyPoint(center, radius);
+}
+
 void MedialAxisTransform::checkValidity(Path& path, const int traceType) const
 {
     // check if there is any boundary element inside the medial ball (has to be concave vertex)
@@ -89,11 +203,11 @@ void MedialAxisTransform::checkValidity(Path& path, const int traceType) const
             boundaryElements[i].index != path.gov1.index &&
             boundaryElements[i].index != path.gov2.index) {
             
-            if (!(path.gov1.type == "Edge" && path.gov1.vertex1 == boundaryElements[i]) &&
-                !(path.gov2.type == "Edge" && path.gov2.vertex2 == boundaryElements[i])) {
-                
+            if (!((path.gov1.type == "Edge" && path.gov1.vertex1 == boundaryElements[i]) ||
+                  (path.gov2.type == "Edge" && path.gov2.vertex2 == boundaryElements[i]))) {
+            
                 double d = (path.keyPoint2 - boundaryElements[i]).norm();
-                if (fabs(d - path.keyPoint2.radius) > 0.01 && d < path.keyPoint2.radius) {
+                if (d < path.keyPoint2.radius) {
                     isValid = false;
                 }
             }
@@ -102,57 +216,11 @@ void MedialAxisTransform::checkValidity(Path& path, const int traceType) const
     
     // if there is, determine new center and radius for medial ball
     if (!isValid) {
-        // find the closest boundary element to the first keypoint
-        int index = -1;
-        double minD = 999;
-        
-        size_t size = boundaryElements.size();
-        int startIndex = path.gov2.index+1;
-        if (startIndex == size) startIndex = 0;
-        
-        int endIndex = path.gov1.index;
-        if (endIndex < path.gov2.index) endIndex += size;
-        
-        for (size_t i = startIndex; i < endIndex; i++) {
-            size_t j = i;
-            if (j >= size) j -= size;
-        
-            if (boundaryElements[j].type == "Vertex") {
-                double d = (path.keyPoint1 - boundaryElements[j]).norm();
-                if (fabs(d - minD) > 0.01 && d < minD) {
-                    minD = d;
-                    index = boundaryElements[j].index;
-                }
-            }
-        }
-        
-        double radius;
-        Vector2d center;
-        
-        if (traceType == 0) {
-            radius = Utils::findCircle((Edge)path.gov1, (Edge)path.gov2,
-                                       (Vector2d)boundaryElements[index], center);
-            
-        } else if (traceType == 1) {
-            if (path.gov2.type == "Vertex") {
-                radius = Utils::findCircle((Edge)path.gov1, (Vector2d)path.gov2,
-                                           (Vector2d)boundaryElements[index], center);
-                
-            } else {
-                radius = Utils::findCircle((Edge)path.gov2, (Vector2d)boundaryElements[index],
-                                           (Vector2d)path.gov1, center);
-            }
-            
-        } else {
-            radius = Utils::findCircle((Vector2d)path.gov1, (Vector2d)path.gov2,
-                                       (Vector2d)boundaryElements[index], center);
-        }
-
-        path.keyPoint2 = KeyPoint(center, radius);
+        setNewKeypoint(path, traceType);
     }
 }
 
-void MedialAxisTransform::traceEdgeEdgePath(Path& path) const
+void MedialAxisTransform::traceEdgeEdgePath(Path& path) 
 {
 	if (path.gov1.halfLine1 == path.gov2.halfLine2) {
 		// key point is an end point 
@@ -177,51 +245,64 @@ void MedialAxisTransform::traceEdgeEdgePath(Path& path) const
 		double radius = Utils::distToEdge(candPoint, path.gov1);
 
 		path.keyPoint2 = KeyPoint(candPoint, radius);
-        
+
 		checkValidity(path, 0);
 	}
 }
 
-void MedialAxisTransform::traceEdgeVertexPath(Path& path, const int order) const
+void MedialAxisTransform::traceEdgeVertexPath(Path& path, const int order)
 {
-	Vector2d focus;
-	Vector2d candPoint1;
-	Vector2d candPoint2;
-
-	if (order == 0) {
-		focus = path.gov1;
-		Edge directrix = path.gov2;
-		path.parabola = Parabola(focus, directrix);
-
-		// compute candidate points
-		candPoint1 = Utils::parabolaIntersection(path.parabola,
-												 (Vector2d)path.gov1, path.gov1.halfLine1);
-
-		candPoint2 = Utils::parabolaIntersection(path.parabola,
-												 path.gov2.vertex2, path.gov2.halfLine2);
-
-	} else {
-		focus = path.gov2;
-		Edge directrix = path.gov1;
-		path.parabola = Parabola(focus, directrix);
-
-		// compute candidate points 
-		candPoint1 = Utils::parabolaIntersection(path.parabola,
-												 path.gov1.vertex1, path.gov1.halfLine1);
-
-		candPoint2 = Utils::parabolaIntersection(path.parabola,
-												 (Vector2d)path.gov2, path.gov2.halfLine2);
-	}
-
-	// find the closer candidate key point
-	Vector2d candPoint = (path.keyPoint1 - candPoint1).squaredNorm() < 
-						 (path.keyPoint1 - candPoint2).squaredNorm() ? 
-						 candPoint1 : candPoint2;
-
-	// find distance to closest governor 
-	double radius = (candPoint - focus).norm();
-
-	path.keyPoint2 = KeyPoint(candPoint, radius);
+    Vector2d focus;
+    Vector2d candPoint1 = Vector2d::Zero();
+    Vector2d candPoint2 = Vector2d::Zero();
+    
+    if (order == 0) {
+        focus = path.gov1;
+        Edge directrix = path.gov2;
+        path.parabola = Parabola(focus, directrix);
+        
+        // compute candidate points
+        Vector2d kpgov1 = path.keyPoint1 - path.gov1;
+        double dot1 = kpgov1.dot(path.gov1.halfLine1);
+        if (dot1 > 0) {
+            candPoint1 = Utils::parabolaIntersection(path.parabola,
+                                                     (Vector2d)path.gov1, path.gov1.halfLine1);
+        } else {
+            boundaryElements[path.gov1.index].transBack = -1;
+        }
+        
+        candPoint2 = Utils::parabolaIntersection(path.parabola,
+                                                 path.gov2.vertex2, path.gov2.halfLine2);
+        
+    } else {
+        focus = path.gov2;
+        Edge directrix = path.gov1;
+        path.parabola = Parabola(focus, directrix);
+        
+        // compute candidate points
+        candPoint1 = Utils::parabolaIntersection(path.parabola,
+                                                 path.gov1.vertex1, path.gov1.halfLine1);
+        
+        Vector2d kpgov2 = path.keyPoint1 - path.gov2;
+        double dot2 = kpgov2.dot(path.gov2.halfLine2);
+        if (dot2 > 0) {
+            candPoint2 = Utils::parabolaIntersection(path.parabola,
+                                                     (Vector2d)path.gov2, path.gov2.halfLine2);
+            
+        } else {
+            boundaryElements[path.gov2.index].transForward = -1;
+        }
+    }
+    
+    // find the closer candidate key point
+    Vector2d candPoint = (path.keyPoint1 - candPoint1).squaredNorm() <
+                         (path.keyPoint1 - candPoint2).squaredNorm() ?
+                         candPoint1 : candPoint2;
+    
+    // find distance to closest governor
+    double radius = (candPoint - focus).norm();
+    
+    path.keyPoint2 = KeyPoint(candPoint, radius);
     
     // FIX: Works, but don't know why?
     if (path.keyPoint1.y() <= focus.y()) {
@@ -230,98 +311,54 @@ void MedialAxisTransform::traceEdgeVertexPath(Path& path, const int order) const
         path.parabola.set = 2;
     }
     
-	checkValidity(path, 1);
+    checkValidity(path, 1);
 }
 
-void MedialAxisTransform::traceVertexVertexPath(Path& path) const
+void MedialAxisTransform::traceVertexVertexPath(Path& path)
 {
 	Edge edge(path.gov1, path.gov2);
 	Vector2d normal = edge.normal();
 	Vector2d mid = (path.gov1 + path.gov2) / 2;
     
 	// compute candidate points
-	Vector2d candPoint1 = Utils::lineIntersection(mid, normal, 
-												  (Vector2d)path.gov1, path.gov1.halfLine1);
-
-	Vector2d candPoint2 = Utils::lineIntersection(mid, normal,
-												  (Vector2d)path.gov2, path.gov2.halfLine2);
-
-	Vector2d zero = Vector2d::Zero();
-	if (candPoint1 != zero || candPoint2 != zero) {
-		// find the closer candidate key point
+    Vector2d candPoint1 = Vector2d::Zero();
+    Vector2d kpgov1 = path.keyPoint1 - path.gov1;
+    double dot1 = kpgov1.dot(path.gov1.halfLine1);
+    if (dot1 > 0) {
+        candPoint1 = Utils::lineIntersection(mid, normal,
+                                            (Vector2d)path.gov1, path.gov1.halfLine1);
+    } else {
+        boundaryElements[path.gov1.index].transBack = -1;
+    }
+    
+    Vector2d candPoint2 = Vector2d::Zero();
+    Vector2d kpgov2 = path.keyPoint1 - path.gov2;
+    double dot2 = kpgov2.dot(path.gov2.halfLine2);
+    if (dot2 > 0) {
+        candPoint2 = Utils::lineIntersection(mid, normal,
+                                            (Vector2d)path.gov2, path.gov2.halfLine2);
         
-		Vector2d candPoint;
-		if (candPoint1 == zero) candPoint = candPoint2;
-		else if (candPoint2 == zero) candPoint = candPoint1;
-		else candPoint = (path.keyPoint1 - candPoint1).squaredNorm() < 
-					     (path.keyPoint1 - candPoint2).squaredNorm() ? 
-						 candPoint1 : candPoint2;
+    } else {
+        boundaryElements[path.gov2.index].transForward = -1;
+    }
 
-		// find distance to closest governor 
-		double radius = (candPoint - path.gov1).norm();
-		path.keyPoint2 = KeyPoint(candPoint, radius);
+    if (dot1 > 0 || dot2 > 0) {
+        Vector2d candPoint = (path.keyPoint1 - candPoint1).squaredNorm() <
+                             (path.keyPoint1 - candPoint2).squaredNorm() ?
+                             candPoint1 : candPoint2;
+        
+        // find distance to closest governor
+        double radius = (candPoint - path.gov1).norm();
+        path.keyPoint2 = KeyPoint(candPoint, radius);
         
         checkValidity(path, 2);
         
     } else {
-        // find boundary element closest to first keypoint
-         int index = -1;
-         double minD = 999;
-         
-         size_t size = boundaryElements.size();
-         int startIndex = path.gov2.index+1;
-         if (startIndex == size) startIndex = 0;
-         
-         int endIndex = path.gov1.index;
-         if (endIndex < path.gov2.index) endIndex += size;
-         
-         for (size_t i = startIndex; i < endIndex; i++) {
-            size_t j = i;
-            if (j >= size) j -= size;
-         
-            double d = (path.keyPoint1 - boundaryElements[j]).norm();
-            if (fabs(d - minD) > 0.01 && d < minD) {
-                minD = d;
-                index = boundaryElements[j].index;
-            }
-         }
-        
-        // remove concave edges
-        BoundaryElement be = boundaryElements[index];
-        if (be.type == "Edge") {
-            int prev = index - 1;
-            if (prev < 0) prev = (int)boundaryElements.size()-1;
-            
-            int next = index + 1;
-            if (next == (int)boundaryElements.size()) next = 0;
-                
-            if (boundaryElements[prev].type == "Vertex" &&
-                (path.keyPoint1 - boundaryElements[prev]).norm() < 0.01) { // FIX: Should be less that epsilon
-                be = boundaryElements[prev];
-                
-            } else if (boundaryElements[next].type == "Vertex" &&
-                       (path.keyPoint1 - boundaryElements[next]).norm() < 0.01) { // FIX: Should be less that epsilon 
-                be = boundaryElements[next];
-            }
-        }
-        
-        // if there is, determine new center and radius for medial ball
-        double radius;
-        Vector2d center;
-         
-        if (be.type == "Edge") {
-            radius = Utils::findCircle((Edge)be, (Vector2d)path.gov2, (Vector2d)path.gov1, center);
-            
-        } else {
-            radius = Utils::findCircle((Vector2d)path.gov1, (Vector2d)path.gov2,
-                                       (Vector2d)be, center);
-        }
-        
-        path.keyPoint2 = KeyPoint(center, radius);
+        setNewKeypoint(path, 2);
     }
 }
 
-void MedialAxisTransform::tracePath(Path& path, std::vector<Path>& medialPaths) const
+void MedialAxisTransform::tracePath(Path& path, std::vector<Path>& medialPaths)
 {
 	// trace paths case by case
 	if (path.gov1.type == "Edge" && path.gov2.type == "Edge") {
@@ -340,10 +377,16 @@ void MedialAxisTransform::tracePath(Path& path, std::vector<Path>& medialPaths) 
 	medialPaths.push_back(path);
 }
 
-void MedialAxisTransform::findIntersections(const Path& path,
+void MedialAxisTransform::findIntersections(Path& path,
                                             std::vector<BoundaryElement>& intersections) const
 {
     std::vector<std::pair<BoundaryElement, bool> > intersectionElements;
+    
+    intersectionElements.clear();
+    std::cout << "g1: " << path.gov1.index << " t: " << boundaryElements[path.gov1.index].transForward
+    << " b: " << boundaryElements[path.gov1.index].transBack << std::endl;
+    std::cout << "g2: " << path.gov2.index << " t: " << boundaryElements[path.gov2.index].transForward
+    << " b: " << boundaryElements[path.gov2.index].transBack << std::endl;
     
     // insert intersecting boundary element around junction point in sorted order
     // implementation detail: gov2 has smaller index than gov1
@@ -390,7 +433,6 @@ void MedialAxisTransform::handleTransitions(std::vector<BoundaryElement>& inters
                 boundaryElements[intersections[i].index].shouldTransitionForward = true;
                 
             } else {
-                boundaryElements[intersections[i].index].shouldTransitionForward = false;
                 boundaryElements[intersections[i].index].transForward = intersections[i+1].index;
             }
         }
@@ -404,7 +446,6 @@ void MedialAxisTransform::handleTransitions(std::vector<BoundaryElement>& inters
                 boundaryElements[intersections[i].index].shouldTransitionBack = true;
                 
             } else {
-                boundaryElements[intersections[i].index].shouldTransitionBack = false;
                 boundaryElements[intersections[i].index].transBack = intersections[i-1].index;
             }
         }
@@ -416,6 +457,7 @@ void MedialAxisTransform::handleTransitions(std::vector<BoundaryElement>& inters
             int nextIndex = intersections[i].index+1;
             if (nextIndex == boundaryElements.size()) nextIndex = 0;
             intersections[i] = boundaryElements[nextIndex];
+            boundaryElements[intersections[i].index].shouldTransitionForward = false;
         }
     }
     
@@ -425,6 +467,7 @@ void MedialAxisTransform::handleTransitions(std::vector<BoundaryElement>& inters
             int nextIndex = intersections[i].index-1;
             if (nextIndex < 0) nextIndex = (int)boundaryElements.size()-1;
             intersections[i] = boundaryElements[nextIndex];
+            boundaryElements[intersections[i].index].shouldTransitionBack = false;
         }
     }
 }
@@ -460,8 +503,9 @@ std::vector<Path> MedialAxisTransform::run()
 	Path firstPath;
 	initializeFirstPath(firstPath);
 	pathStack.push(firstPath);
-	
- 	while (!pathStack.empty()) {
+
+    int i = 0;
+    while (!pathStack.empty()) {
 		Path path = pathStack.top();
 		pathStack.pop();
 
@@ -474,7 +518,10 @@ std::vector<Path> MedialAxisTransform::run()
 				pathStack.push(newPathList[i]);
 			}
 		}
+        
+        i++;
+        if (i == 4) break;
 	}
-	
+
 	return medialPaths;
 }

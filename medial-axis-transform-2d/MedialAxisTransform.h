@@ -18,19 +18,22 @@ private:
 	// initializes the first path by finding the first convex vertex in the boundary
 	void initializeFirstPath(Path& firstPath) const;
     
+    // sets new keypoint if candidate is not vaild
+    void setNewKeypoint(Path& path, const int traceType) const;
+    
 	// check path validity
 	void checkValidity(Path& path, const int traceType) const;
 
 	// helper functions for tracing paths
-	void traceEdgeEdgePath(Path& path) const;
-	void traceEdgeVertexPath(Path& path, const int order) const;
-	void traceVertexVertexPath(Path& path) const;
+	void traceEdgeEdgePath(Path& path);
+	void traceEdgeVertexPath(Path& path, const int order);
+	void traceVertexVertexPath(Path& path);
 
 	// adds new valid path to meidal paths
-	void tracePath(Path& path, std::vector<Path>& medialPaths) const;
+	void tracePath(Path& path, std::vector<Path>& medialPaths);
     
     // finds boundary elements intersecting with the medial ball
-    void findIntersections(const Path& path,
+    void findIntersections(Path& path,
                            std::vector<BoundaryElement>& intersections) const;
 
 	// handle transitions
