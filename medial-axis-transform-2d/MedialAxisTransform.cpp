@@ -519,8 +519,8 @@ std::vector<Path> MedialAxisTransform::run()
 			}
 		}
         
-        i++;
-        if (i == 4) break;
+        //i++;
+        //if (i == 4) break;
 	}
 
 	return medialPaths;
