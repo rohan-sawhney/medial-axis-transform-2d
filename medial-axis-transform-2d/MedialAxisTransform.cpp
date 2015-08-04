@@ -38,7 +38,7 @@ void removeConcaveEdges(std::vector<std::pair<BoundaryElement, bool> >& intersec
             intersectionElements[size-3].second = false;
         }
     }
-    
+  
     // check if any other intersection element is a concave vertex
     for (size_t i = 1; i < size-1; i++) {
         if (intersectionElements[i].first.type == "Vertex") {
@@ -80,11 +80,13 @@ void MedialAxisTransform::initializeFirstPath(Path& firstPath) const
 	}
 }
 
-void MedialAxisTransform::setNewKeypoint(Path& path, const int traceType) const
+int MedialAxisTransform::closestIntersectionPoint(const KeyPoint& kp, const double radius,
+                                                  const Path& path) const
 {
-    // find the closest boundary element to the first keypoint
+    // find the closest boundary element to the keypoint
     int index = -1;
-    double minD = 999;
+    double minD = radius;
+    std::vector<std::pair<BoundaryElement, bool> > intersectionElements;
     
     size_t size = boundaryElements.size();
     int startIndex = path.gov2.index+1;
@@ -107,15 +109,14 @@ void MedialAxisTransform::setNewKeypoint(Path& path, const int traceType) const
             bool exp4 = path.gov2.type == "Edge" && boundaryElements[j].vertex1 == path.gov2.vertex2;
             
             if (!(exp1 || exp2 || exp3 || exp4)) {
-                d = Utils::distToEdge(path.keyPoint1, boundaryElements[j]);
+                d = Utils::distToEdge(kp, boundaryElements[j]);
             }
             
         } else {
             // if a vertex, then governor cannot be an adjacent edge
-            
             if (!((path.gov1.type == "Edge" && path.gov1.vertex1 == boundaryElements[j]) ||
                   (path.gov2.type == "Edge" && path.gov2.vertex2 == boundaryElements[j]))) {
-                d = (path.keyPoint1 - boundaryElements[j]).norm();
+                d = (kp - boundaryElements[j]).norm();
             }
         }
         
@@ -125,29 +126,40 @@ void MedialAxisTransform::setNewKeypoint(Path& path, const int traceType) const
         }
     }
     
-    // remove concave edges
-    if (boundaryElements[index].type == "Edge") {
-        int prev = index - 1;
-        if (prev < 0) prev = (int)boundaryElements.size()-1;
-        
-        int next = index + 1;
-        if (next == (int)boundaryElements.size()) next = 0;
-        
-        double d = Utils::distToEdge(path.keyPoint1, boundaryElements[index]);
-        if (boundaryElements[prev].type == "Vertex" &&
-            fabs((path.keyPoint1 - boundaryElements[prev]).norm() - d) < 0.01) {
-            index = prev;
+    if (index != -1) {
+        // remove concave edges
+        if (boundaryElements[index].type == "Edge") {
+            int prev = index - 1;
+            if (prev < 0) prev = (int)boundaryElements.size()-1;
             
-        } else if (boundaryElements[next].type == "Vertex" &&
-                   fabs((path.keyPoint1 - boundaryElements[next]).norm() - d) < 0.01) {
-            index = next;
+            int next = index + 1;
+            if (next == (int)boundaryElements.size()) next = 0;
+            
+            double d = Utils::distToEdge(path.keyPoint1, boundaryElements[index]);
+            if (boundaryElements[prev].type == "Vertex" &&
+                fabs((path.keyPoint1 - boundaryElements[prev]).norm() - d) < 0.01) {
+                index = prev;
+                
+            } else if (boundaryElements[next].type == "Vertex" &&
+                       fabs((path.keyPoint1 - boundaryElements[next]).norm() - d) < 0.01) {
+                index = next;
+            }
         }
     }
+    
+    return index;
+}
+
+void MedialAxisTransform::setNewKeypoint(Path& path, const int traceType) const
+{
+    // find the closest boundary element to the first keypoint
+    int index = closestIntersectionPoint(path.keyPoint1, 999, path);
     
     std::cout << "cv index: " << index << " tt: " << traceType << std::endl;
     double radius;
     Vector2d center;
     
+    // TODO: check order
     if (traceType == 0) {
         if (boundaryElements[index].type == "Edge") {
             radius = Utils::findCircle((Edge)path.gov1, (Edge)path.gov2,
@@ -197,29 +209,15 @@ void MedialAxisTransform::setNewKeypoint(Path& path, const int traceType) const
 void MedialAxisTransform::checkValidity(Path& path, const int traceType) const
 {
     // check if there is any boundary element inside the medial ball (has to be concave vertex)
-    bool isValid = true;
-    for (size_t i = 0; i < boundaryElements.size(); i++) {
-        if (boundaryElements[i].type == "Vertex" &&
-            boundaryElements[i].index != path.gov1.index &&
-            boundaryElements[i].index != path.gov2.index) {
-            
-            if (!((path.gov1.type == "Edge" && path.gov1.vertex1 == boundaryElements[i]) ||
-                  (path.gov2.type == "Edge" && path.gov2.vertex2 == boundaryElements[i]))) {
-            
-                double d = (path.keyPoint2 - boundaryElements[i]).norm();
-                if (d < path.keyPoint2.radius) {
-                    isValid = false;
-                }
-            }
-        }
-    }
+    int index = closestIntersectionPoint(path.keyPoint2, path.keyPoint2.radius, path);
     
     // if there is, determine new center and radius for medial ball
-    if (!isValid) {
+    if (index > -1) {
         setNewKeypoint(path, traceType);
     }
 }
 
+// TODO: not correct necessarily, edge cases
 void MedialAxisTransform::traceEdgeEdgePath(Path& path) 
 {
 	if (path.gov1.halfLine1 == path.gov2.halfLine2) {
@@ -378,23 +376,28 @@ void MedialAxisTransform::tracePath(Path& path, std::vector<Path>& medialPaths)
 }
 
 void MedialAxisTransform::findIntersections(Path& path,
-                                            std::vector<BoundaryElement>& intersections) const
+                                            std::vector<BoundaryElement>& intersections)
 {
     std::vector<std::pair<BoundaryElement, bool> > intersectionElements;
-    
-    intersectionElements.clear();
     std::cout << "g1: " << path.gov1.index << " t: " << boundaryElements[path.gov1.index].transForward
-    << " b: " << boundaryElements[path.gov1.index].transBack << std::endl;
+              << " b: " << boundaryElements[path.gov1.index].transBack << std::endl;
     std::cout << "g2: " << path.gov2.index << " t: " << boundaryElements[path.gov2.index].transForward
-    << " b: " << boundaryElements[path.gov2.index].transBack << std::endl;
+              << " b: " << boundaryElements[path.gov2.index].transBack << std::endl;
     
     // insert intersecting boundary element around junction point in sorted order
     // implementation detail: gov2 has smaller index than gov1
     size_t size = boundaryElements.size();
+    int startIndex = path.gov2.index+1;
+    if (startIndex == size) startIndex = 0;
+    
     int endIndex = path.gov1.index;
     if (endIndex < path.gov2.index) endIndex += size;
     
-    for (size_t i = path.gov2.index; i <= endIndex; i++) {
+    // insert gov2
+    std::pair<BoundaryElement, bool> gov2Pair(path.gov2, true);
+    intersectionElements.push_back(gov2Pair);
+    
+    for (size_t i = startIndex; i < endIndex; i++) {
         size_t index = i;
         if (index >= size) index -= size;
         
@@ -412,6 +415,10 @@ void MedialAxisTransform::findIntersections(Path& path,
             intersectionElements.push_back(boundaryElementPair);
         }
     }
+    
+    // insert gov1
+    std::pair<BoundaryElement, bool> gov1Pair(path.gov1, true);
+    intersectionElements.push_back(gov1Pair);
     
     // remove concave edges
     removeConcaveEdges(intersectionElements);
@@ -512,14 +519,14 @@ std::vector<Path> MedialAxisTransform::run()
 		tracePath(path, medialPaths);
 		if (path.keyPoint2.radius != 0.0) {
 			initializeNewPaths(path, newPathList);
-            if (newPathList.size() == 1) medialPaths[medialPaths.size()-1].keyPoint2.isTransition = true;
+            if (newPathList.size() ==  1) medialPaths[medialPaths.size()-1].keyPoint2.isTransition = true;
             
 			for (int i = 0; i < newPathList.size(); i++) {
 				pathStack.push(newPathList[i]);
 			}
 		}
         
-        //i++;
+        i++;
         //if (i == 4) break;
 	}
 

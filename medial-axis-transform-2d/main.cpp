@@ -74,6 +74,7 @@ void drawParabola(const Parabola& p, const Vector2d& start, const Vector2d& end)
         dx /= 10;
     }
     
+    // TODO: Which parabola to draw???
     // FIX: GL_LINE_STRIP does not render for small "diff"
     glBegin(GL_LINE_STRIP);
     for (double x = startX; x < endX; x += dx) {

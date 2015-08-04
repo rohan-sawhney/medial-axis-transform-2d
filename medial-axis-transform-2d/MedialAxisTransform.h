@@ -18,6 +18,10 @@ private:
 	// initializes the first path by finding the first convex vertex in the boundary
 	void initializeFirstPath(Path& firstPath) const;
     
+    // returns closest intersection point within or on medial ball
+    int closestIntersectionPoint(const KeyPoint& kp, const double radius,
+                                 const Path& path) const;
+    
     // sets new keypoint if candidate is not vaild
     void setNewKeypoint(Path& path, const int traceType) const;
     
@@ -34,7 +38,7 @@ private:
     
     // finds boundary elements intersecting with the medial ball
     void findIntersections(Path& path,
-                           std::vector<BoundaryElement>& intersections) const;
+                           std::vector<BoundaryElement>& intersections);
 
 	// handle transitions
 	void handleTransitions(std::vector<BoundaryElement>& intersections);
@@ -42,7 +46,7 @@ private:
 	// initializes new paths based on previous key point and governors
 	void initializeNewPaths(Path& path, std::vector<Path>& newPathList);
 
-	// member variable
+	// member variables
 	std::vector<BoundaryElement> boundaryElements;
 };
 
