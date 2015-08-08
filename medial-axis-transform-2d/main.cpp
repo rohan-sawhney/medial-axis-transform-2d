@@ -78,17 +78,17 @@ void drawParabola(const Parabola& p, const Vector2d& start, const Vector2d& end)
     // FIX: GL_LINE_STRIP does not render for small "diff"
     glBegin(GL_LINE_STRIP);
     for (double x = startX; x < endX; x += dx) {
-        //if (p.set == 1) {
+        if (p.set == 1) {
             glVertex2f(x, p.getY(x).first);
-        //}
+        }
     }
     glEnd();
     
     glBegin(GL_LINE_STRIP);
     for (double x = startX; x < endX; x += dx) {
-        //if (p.set == 2) {
+        if (p.set == 2) {
             glVertex2f(x, p.getY(x).second);
-        //}
+        }
     }
     glEnd();
 }
@@ -158,7 +158,7 @@ void display()
                 glVertex2f(path.keyPoint2.x(), path.keyPoint2.y());
                 glEnd();
             }
-            
+                        
             if (i == step-1) {
                 boundaryElements[path.gov1.index].isGov = true;
                 boundaryElements[path.gov2.index].isGov = true;

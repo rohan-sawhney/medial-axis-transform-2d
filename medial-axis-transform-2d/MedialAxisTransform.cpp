@@ -153,7 +153,7 @@ int MedialAxisTransform::closestIntersectionPoint(const KeyPoint& kp, const doub
 void MedialAxisTransform::setNewKeypoint(Path& path, const int traceType) const
 {
     // find the closest boundary element to the first keypoint
-    int index = closestIntersectionPoint(path.keyPoint1, 999, path);
+    int index = closestIntersectionPoint(path.keyPoint1, 9999, path);
     
     std::cout << "cv index: " << index << " tt: " << traceType << std::endl;
     double radius;
@@ -221,7 +221,7 @@ void MedialAxisTransform::checkValidity(Path& path, const int traceType) const
 void MedialAxisTransform::traceEdgeEdgePath(Path& path) 
 {
 	if (path.gov1.halfLine1 == path.gov2.halfLine2) {
-		// key point is an end point 
+		// key point is an end point
 		path.keyPoint2 = KeyPoint(path.gov2.vertex2, 0);
  		
 	} else {
@@ -484,6 +484,10 @@ void MedialAxisTransform::initializeNewPaths(Path& path, std::vector<Path>& newP
     // get intersecting boundary elements
     std::vector<BoundaryElement> intersections;
     findIntersections(path, intersections);
+    
+   // if (path.gov1.type == "Edge" && path.gov2.type == "Edge" && intersections.size() == 2) {
+
+    //}
 
     // handle transitions
 	handleTransitions(intersections);
@@ -527,7 +531,7 @@ std::vector<Path> MedialAxisTransform::run()
 		}
         
         i++;
-        //if (i == 4) break;
+        if (i == 39) break;
 	}
 
 	return medialPaths;
